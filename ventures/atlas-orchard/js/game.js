@@ -1,0 +1,2 @@
+/* Atlas Orchard loader: the game source is split into two parts for publishing (size limit). */
+(function(){Promise.all(['js/game.a.js','js/game.b.js'].map(function(u){return fetch(u,{cache:'no-cache'}).then(function(r){if(!r.ok)throw new Error(u+' '+r.status);return r.text();});})).then(function(p){(0,eval)(p.join(''));}).catch(function(e){console.error('Atlas Orchard failed to load',e);});})();
