@@ -4,7 +4,7 @@
 BR.ui = (() => {
   const $ = (id) => document.getElementById(id);
   const M = BR.meta, { fmtInt, fmtMoney, fmtTime } = BR.util;
-  const SCREENS = ['menu', 'shop', 'trophies', 'records', 'settings', 'pause', 'over'];
+  const SCREENS = ['menu', 'shop', 'trophies', 'records', 'settings', 'pause', 'over', 'perk'];
   let shopTab = 'upgrades';
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
@@ -33,21 +33,51 @@ BR.ui = (() => {
     $('mRankBar').style.width = `${((s.missionsDone % 3) / 3) * 100}%`;
     const d = M.dailyInfo();
     $('mDaily').textContent = d.won ? `✓ Beaten! Best ${fmtMoney(d.best)}` : `Beat ${fmtMoney(d.target)} → +250 coins${d.best ? ` · best ${fmtMoney(d.best)}` : ''}`;
-    renderMissions($('mMissions'));
+    renderMissions($('mMissions'), null, [], true);
+    renderGoals($('mGoals'));
     const touch = matchMedia('(pointer: coarse)').matches;
     $('controlsHint').textContent = touch ? 'Tap right side: jump · Hold left side: dive' : 'Space / click: jump · Hold ↓ or S: dive · P: pause · M: mute';
     updateBadges();
   }
 
-  function renderMissions(el, live = null, justDone = []) {
+  // "Next goal" cards: cheapest unlock, a bigger goal (character / heavy upgrade), and the next free content unlock.
+  function goalCard(label, g, coins) {
+    const ready = coins >= g.cost, pct = Math.min(100, (coins / g.cost) * 100);
+    return `<div class="goal-card${ready ? ' ready' : ''}"><div class="gl"><span>${esc(label)}</span><span>${ready ? '✅ affordable now!' : `${fmtInt(g.cost - coins)} to go`}</span></div>
+      <div><b>${esc(g.name)}</b> <span style="color:var(--muted)">· <span class="coin-ico">$</span> ${fmtInt(g.cost)}${g.perk ? ` · ${esc(g.perk)}` : ''}</span></div><div class="bar"><i style="width:${pct}%"></i></div></div>`;
+  }
+  function renderGoals(el) {
+    const coins = M.save.coins, g = M.nextGoal(), b = M.bigGoal(), c = M.nextContent();
+    let html = '';
+    if (g) html += goalCard('Next unlock', g, coins);
+    if (b && (!g || b.name !== g.name)) html += goalCard('Big goal', b, coins);
+    if (c) html += `<div class="goal-card content"><div class="gl"><span>Coming up (free)</span></div><div>${esc(c)}</div></div>`;
+    if (!html) html = `<div class="goal-card"><b>You own everything.</b> Chase the leaderboard!</div>`;
+    el.innerHTML = html;
+  }
+
+  // ---------- perk picker ----------
+  function renderPerk(choices, game) {
+    $('perkCards').innerHTML = choices.map((q, i) => {
+      const lv = game.perks[q.id] || 0;
+      return `<button class="perk-card" data-perk="${q.id}" style="animation-delay:${i * 0.07}s"><span class="pk">${i + 1}</span><span class="pi">${q.icon}</span>
+        <div><h4>${esc(q.name)}</h4><p>${esc(q.desc)}</p>${lv ? `<span class="lv">stack ${lv + 1}/${q.max}</span>` : ''}</div></button>`;
+    }).join('');
+    const touch = matchMedia('(pointer: coarse)').matches;
+    $('perkKeys').textContent = touch ? 'Tap a card' : 'Press 1 · 2 · 3, or click a card';
+    $('perkSub').textContent = `Perk ${game.stats.perks + 1} · lasts for the rest of this run`;
+  }
+
+  function renderMissions(el, live = null, justDone = [], swappable = false) {
     const s = M.save;
-    let html = `<div class="mhead"><span>Missions · ${esc(M.rankName(s.rank))}</span><span>${s.missionsDone % 3}/3 to rank up</span></div>`;
+    const canSwap = swappable && s.swaps > 0;
+    let html = `<div class="mhead"><span>Missions · ${esc(M.rankName(s.rank))}</span><span>${canSwap ? '↻ 1 free swap · ' : ''}${s.missionsDone % 3}/3 to rank up</span></div>`;
     for (const d of justDone) html += `<div class="mission done"><div class="ck">✓</div><div>${esc(d.text)}</div><div class="rw">+${d.reward}</div></div>`;
-    for (const m of s.missions) {
+    for (const [i, m] of s.missions.entries()) {
       const prog = live ? M.missionLive(m, live) : m.progress;
       const pct = Math.min(100, (prog / m.n) * 100), done = prog >= m.n;
       html += `<div class="mission${done ? ' done' : ''}"><div class="ck">${done ? '✓' : ''}</div><div>${esc(M.missionText(m))}</div>
-        <div class="rw">+${m.reward}</div><div class="bar mbar"><i style="width:${pct}%"></i></div></div>`;
+        <div class="rw">+${m.reward}${canSwap ? ` <button class="swap" data-swap="${i}" title="Swap this mission (1 free per run)">↻</button>` : ''}</div><div class="bar mbar"><i style="width:${pct}%"></i></div></div>`;
     }
     el.innerHTML = html;
   }
@@ -106,15 +136,20 @@ BR.ui = (() => {
   function renderSettings() {
     const st = M.save.settings;
     $('setMusic').checked = st.music; $('setSfx').checked = st.sfx; $('setShake').checked = st.shake;
+    $('setGhost').checked = st.ghost !== false; $('setHints').checked = st.hints !== false;
   }
 
   // ---------- run summary ----------
-  function renderOver(stats, res, daily) {
+  function renderOver(stats, res, daily, shot) {
     $('oCause').textContent = stats.cause || 'Run over';
+    $('oTip').textContent = stats.tip ? `💡 ${stats.tip}` : '';
+    const img = $('oShot');
+    if (shot) { img.src = shot; img.classList.remove('hidden'); } else { img.removeAttribute('src'); img.classList.add('hidden'); }
     $('oBest').classList.toggle('hidden', !res.newBest);
     const grid = [
-      ['Distance', `${fmtInt(stats.dist)} m`], ['Coins', `+${fmtInt(res.banked)}`], ['Best chain', stats.maxCombo],
-      ['Perfects', stats.perfects], ['Stomps', stats.stomps], ['Time', fmtTime(stats.time)],
+      ['Distance', `${fmtInt(stats.dist)} m`], ['Coins', `+${fmtInt(res.banked)}`], ['Time', fmtTime(stats.time)], ['Best chain', stats.maxCombo], ['Perfects', stats.perfects],
+      ['Close calls', stats.nearMisses || 0], ['Stomps', stats.stomps], ['Breakers', stats.breakers || 0], ['Perks', stats.perks || 0],
+      ['Regimes', (stats.regimeIds || []).map((id) => BR.World.REGIMES[id].icon).join('') || '—'],
     ];
     $('oStats').innerHTML = grid.map(([k, v]) => `<div><b>${esc(v)}</b><span>${esc(k)}</span></div>`).join('');
     const rw = [];
@@ -122,12 +157,14 @@ BR.ui = (() => {
     if (res.lbRank && res.lbRank <= 10) rw.push(`📈 #${res.lbRank} on your Top 10`);
     if (res.rankUp) rw.push(`⭐ Promoted to ${M.rankName(M.save.rank)}! (+10% score)`);
     for (const a of res.achievements) rw.push(`🏆 ${a.name} +${a.reward}`);
-    $('oRewards').innerHTML = rw.map((t, i) => `<span class="rw" style="animation-delay:${0.3 + i * 0.12}s">${esc(t)}</span>`).join('');
+    if (res.ghostSaved && M.save.settings.ghost !== false) rw.push('👻 New ghost saved: race it next run');
+    const nw = (res.unlocks || []).map((t) => `NEW! ${t}`);
+    $('oRewards').innerHTML = rw.concat(nw).map((t, i) => `<span class="rw${i >= rw.length ? ' new' : ''}" style="animation-delay:${0.3 + i * 0.12}s">${esc(t)}</span>`).join('');
+    const ids = stats.perkIds || [];
+    const cnt = {}; for (const id of ids) cnt[id] = (cnt[id] || 0) + 1;
+    $('oPerks').innerHTML = ids.length ? 'Perks: ' + Object.keys(cnt).map((id) => { const q = M.PERKS.find((x) => x.id === id); return q ? `<span>${q.icon} ${esc(q.name)}${cnt[id] > 1 ? ` ×${cnt[id]}` : ''}</span>` : ''; }).join('') : '';
     renderMissions($('oMissions'), null, res.missionsDone);
-    const g = M.nextGoal(), coins = M.save.coins;
-    $('oGoal').innerHTML = !g ? `You own everything. Legend. <b>${fmtInt(coins)}</b> coins banked.`
-      : coins >= g.cost ? `You can afford <b>${esc(g.name)}</b> right now! 🛒`
-      : `Next unlock: <b>${esc(g.name)}</b> — ${fmtInt(g.cost - coins)} coins to go`;
+    renderGoals($('oGoal'));
     updateBadges();
     // count-up
     const el = $('oScore'), target = stats.score, t0 = performance.now(), dur = 700;
@@ -151,5 +188,5 @@ BR.ui = (() => {
 
   function setShopTab(t) { shopTab = t; renderShop(); }
 
-  return { show, hideAll, renderMenu, renderShop, renderMissions, renderOver, toast, setShopTab, updateBadges, $ };
+  return { show, hideAll, renderMenu, renderShop, renderMissions, renderOver, renderPerk, toast, setShopTab, updateBadges, $ };
 })();
