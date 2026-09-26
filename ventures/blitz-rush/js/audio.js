@@ -87,6 +87,10 @@ BR.audio = (() => {
     achievement() { [0, 4, 7, 11, 14].forEach((s, i) => tone(semis(659, s), 0.18, { type: 'triangle', vol: 0.14, when: i * 0.07 })); },
     newBest() { [0, 4, 7, 12, 7, 12, 16].forEach((s, i) => tone(semis(523, s), 0.16, { type: 'square', vol: 0.1, when: i * 0.09, filter: 3500 })); },
     tick() { tone(1800, 0.02, { type: 'square', vol: 0.04 }); },
+    nearMiss() { noise(0.12, { vol: 0.14, type: 'bandpass', freq: 2500, sweep: 7000 }); tone(1480, 0.07, { type: 'sine', vol: 0.1, when: 0.03 }); },
+    regime() { [0, 7, 12].forEach((s, i) => tone(semis(392, s), 0.22, { type: 'triangle', vol: 0.13, when: i * 0.08 })); noise(0.4, { vol: 0.08, type: 'highpass', freq: 3000, sweep: 9000 }); },
+    alarm() { for (let i = 0; i < 3; i++) { tone(880, 0.12, { type: 'square', vol: 0.1, when: i * 0.2, filter: 2500 }); tone(660, 0.12, { type: 'square', vol: 0.1, when: i * 0.2 + 0.1, filter: 2500 }); } },
+    perkOpen() { [0, 4, 7, 11].forEach((s, i) => tone(semis(523, s), 0.2, { type: 'sine', vol: 0.12, when: i * 0.05 })); },
   };
 
   // ---------- Music: 16-step loop, Am-F-C-G, intensity layers ----------
