@@ -132,7 +132,7 @@ function render(){
       <div class="${cls(v.pct_vs_start)}">${pct(v.pct_vs_start)} vs $5,000</div>
       <div class="kv"><span>Cash</span><span>${cad(v.cash)}</span><span>Market holdings</span><span>${cad(v.positions_value)}</span>
       <span>NFTs (floor)</span><span>${cad(v.nft_value||0)}</span><span>Business value</span><span>${cad(v.business_value||0)}</span>
-      <span>Art appraisal</span><span>${cad(v.art_value||0)}</span><span><b>Total</b></span><span><b>${cad(v.net_worth)}</b></span></div></div>`;
+      <span>Art appraisal</span><span>${cad(v.art_value||0)}</span><span>Prepaid (unused ads/services)</span><span>${cad(v.prepaid_value||0)}</span><span><b>Total</b></span><span><b>${cad(v.net_worth)}</b></span></div></div>`;
   }).join("");
   // chart
   const snaps = DATA.snapshots||[];
@@ -154,6 +154,7 @@ function render(){
       ${rows}<tr><td>Cash</td><td></td><td></td><td></td><td class="r">${cad(v.cash)}</td><td></td></tr>
       ${(v.nfts||[]).map(n=>`<tr><td>NFT ${esc(n.name)}</td><td class="r">${n.qty}</td><td class="r">${cad(n.avg_cost_cad)}</td><td class="r">${cad(n.floor_cad)}</td><td class="r">${cad(n.market_value_cad)}</td><td class="r ${cls(n.pl_cad)}">${cad(n.pl_cad)}</td></tr>`).join("")}
       ${(v.ventures||[]).map(b=>`<tr><td>Business: ${esc(b.name)}</td><td colspan="4" class="r"><small class="sub">${cad(b.avg_daily_profit)}/day × 365 × ${b.multiple.toFixed(2)}x × ${(b.confidence*100).toFixed(1)}% conf.</small><br>${cad(b.value)}</td><td></td></tr>`).join("")}
+      ${(v.prepaid||[]).map(p=>`<tr><td>Prepaid ad #${p.id} (${esc(p.channel)}, ${esc(p.slug)})</td><td colspan="4" class="r"><small class="sub">paid ${cad(p.paid)} · expensed ${cad(p.expensed)} · ${p.days_left}d unused</small><br>${cad(p.value)}</td><td></td></tr>`).join("")}
       ${(v.art||[]).map(a=>`<tr><td>Art: ${esc(a.title)}</td><td colspan="4" class="r"><small class="sub">min(50% × fair ${cad(a.fair)}, list ${cad(a.price)})</small><br>${cad(a.value)}</td><td></td></tr>`).join("")}
       <tr><td><b>Total</b></td><td></td><td></td><td></td><td class="r"><b>${cad(v.net_worth)}</b></td><td class="r ${cls(v.pct_vs_start)}">${pct(v.pct_vs_start)}</td></tr></table></div></div>`;
   }).join("");
