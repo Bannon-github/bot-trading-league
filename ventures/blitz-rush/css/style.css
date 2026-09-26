@@ -152,3 +152,43 @@ td.num { text-align: right; font-variant-numeric: tabular-nums; }
 
 .portrait-hint { display: none; color: var(--gold); font-size: 12px; text-align: center; margin: 8px 0 0; }
 @media (orientation: portrait) and (max-width: 700px) { .portrait-hint { display: block; } }
+
+/* ---- v2: goals, perk picker, death readout ---- */
+.goals { display: grid; gap: 6px; margin-top: 10px; text-align: left; }
+.goal-card { background: rgba(255, 210, 63, .07); border: 1px solid rgba(255, 210, 63, .3); border-radius: 10px; padding: 7px 10px; font-size: 13px; }
+.goal-card .gl { display: flex; justify-content: space-between; gap: 8px; }
+.goal-card .gl span:first-child { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .8px; }
+.goal-card b { color: var(--gold); }
+.goal-card .bar { margin-top: 5px; }
+.goal-card.ready { border-color: var(--green); background: rgba(34, 227, 154, .12); animation: glow 1.4s infinite; }
+@keyframes glow { 50% { box-shadow: 0 0 0 3px rgba(34, 227, 154, .25); } }
+.goal-card.content { background: rgba(125, 249, 255, .06); border-color: rgba(125, 249, 255, .3); }
+.perk-panel { text-align: center; width: min(640px, 100%); }
+.perk-sub { color: var(--muted); margin: 4px 0 12px; font-size: 13px; }
+.perk-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.perk-card { appearance: none; font: inherit; color: var(--text); cursor: pointer; background: rgba(40, 55, 110, .55); border: 2px solid var(--line); border-radius: 14px; padding: 14px 10px; display: flex; flex-direction: column; align-items: center; gap: 6px; transition: transform .1s, border-color .15s; animation: pop .3s backwards; touch-action: manipulation; }
+.perk-card:hover, .perk-card:focus-visible { border-color: var(--gold); transform: translateY(-3px); outline: none; }
+.perk-card .pi { font-size: 34px; }
+.perk-card h4 { margin: 0; font-size: 15px; }
+.perk-card p { margin: 0; font-size: 12.5px; color: var(--muted); }
+.perk-card .pk { font-size: 11px; color: var(--gold); font-weight: 800; }
+.perk-card .lv { font-size: 11px; color: var(--green); }
+.perk-keys { color: var(--muted); font-size: 12px; margin: 12px 0 0; }
+@media (max-width: 520px) { .perk-cards { grid-template-columns: 1fr; } .perk-card { flex-direction: row; text-align: left; } .perk-card .pi { font-size: 28px; } }
+.death-row { display: flex; gap: 10px; align-items: center; justify-content: center; margin-bottom: 6px; text-align: left; }
+.death-shot { width: 132px; height: auto; border-radius: 8px; border: 2px solid rgba(255, 77, 109, .6); flex: none; }
+.tip { color: var(--muted); font-size: 12px; margin: 0; }
+.perk-row { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; margin-top: 6px; font-size: 12px; color: var(--muted); }
+.perk-row span { background: rgba(255, 255, 255, .06); border-radius: 999px; padding: 2px 8px; }
+.rewards .rw.new { background: rgba(125, 249, 255, .12); border-color: rgba(125, 249, 255, .5); color: #7df9ff; }
+@media (max-height: 560px) { .death-shot { width: 96px; } .perk-card { padding: 8px; } .perk-card .pi { font-size: 26px; } }
+.mission .swap { appearance: none; border: 1px solid var(--line); background: rgba(255,255,255,.08); color: var(--text); border-radius: 6px; font: inherit; font-size: 12px; padding: 0 6px; margin-left: 4px; cursor: pointer; }
+.mission .swap:hover { border-color: var(--gold); }
+
+.over-panel { width: min(580px, 100%); }
+.over-panel .over-grid { grid-template-columns: repeat(5, 1fr); margin: 10px 0; }
+.over-panel .over-grid b { font-size: 16px; }
+.over-actions { display: grid; grid-template-columns: 1fr auto auto; gap: 8px; align-items: stretch; margin-bottom: 10px; }
+.over-actions .btn-big { margin: 0; }
+.big-score { font-size: 46px; }
+@media (max-width: 520px) { .over-panel .over-grid { grid-template-columns: repeat(3, 1fr); } .over-actions { grid-template-columns: 1fr 1fr; } .over-actions .btn-big { grid-column: 1 / -1; } }
