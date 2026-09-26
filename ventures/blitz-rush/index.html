@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#0b1030">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="description" content="Blitz Rush — ride a live price chart. An arcade momentum runner by Blitz.">
+  <title>Blitz Rush</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <canvas id="game" aria-label="Blitz Rush game canvas"></canvas>
+
+  <!-- In-run buttons -->
+  <div id="hudButtons" class="hidden">
+    <button id="btnMute" class="icon-btn" title="Mute (M)" aria-label="Toggle sound">🔊</button>
+    <button id="btnPause" class="icon-btn" title="Pause (P / Esc)" aria-label="Pause">⏸</button>
+  </div>
+
+  <!-- Title / main menu -->
+  <section id="menu" class="screen">
+    <div class="panel menu-panel">
+      <div class="logo">
+        <svg viewBox="0 0 64 64" class="logo-bolt" aria-hidden="true"><circle cx="32" cy="32" r="30" fill="#ffd23f" stroke="#0a0f22" stroke-width="3"/><path d="M29 12h12l-7 15h10L24 54l6-20h-9z" fill="#1a1a2e"/></svg>
+        <div>
+          <h1>BLITZ<span>RUSH</span></h1>
+          <p class="tagline">Ride the chart. Chase the momentum.</p>
+        </div>
+      </div>
+      <div class="menu-stats">
+        <div class="chip coin-chip"><span class="coin-ico">$</span><b id="mCoins">0</b></div>
+        <div class="chip">Best <b id="mBest">$0</b></div>
+        <div class="chip rank-chip"><span id="mRank">Intern</span><div class="bar"><i id="mRankBar"></i></div></div>
+      </div>
+      <button id="btnPlay" class="btn btn-primary btn-big">▶ PLAY <small>Space / Enter</small></button>
+      <button id="btnDaily" class="btn btn-daily"><span>📅 DAILY CHALLENGE</span><small id="mDaily">Same chart for everyone today</small></button>
+      <div class="menu-row">
+        <button class="btn" data-open="shop">🛒 Shop<span id="shopBadge" class="badge hidden">0</span></button>
+        <button class="btn" data-open="trophies">🏆 Trophies</button>
+        <button class="btn" data-open="records">📈 Records</button>
+        <button class="btn" data-open="settings">⚙️</button>
+      </div>
+      <div class="missions" id="mMissions"></div>
+      <p class="controls-hint" id="controlsHint"></p>
+      <p class="portrait-hint">📱 Tip: rotate to landscape to see further ahead</p>
+    </div>
+  </section>
+
+  <!-- Shop -->
+  <section id="shop" class="screen hidden">
+    <div class="panel wide">
+      <header class="panel-head"><h2>Shop</h2><div class="chip coin-chip"><span class="coin-ico">$</span><b class="coinsNow">0</b></div><button class="btn btn-close" data-back>✕</button></header>
+      <div class="tabs"><button class="tab active" data-tab="upgrades">Upgrades</button><button class="tab" data-tab="skins">Characters</button></div>
+      <div id="shopList" class="grid"></div>
+    </div>
+  </section>
+
+  <!-- Achievements -->
+  <section id="trophies" class="screen hidden">
+    <div class="panel wide">
+      <header class="panel-head"><h2>Trophies <small id="trophyCount"></small></h2><button class="btn btn-close" data-back>✕</button></header>
+      <div id="trophyList" class="grid"></div>
+    </div>
+  </section>
+
+  <!-- Records / leaderboard -->
+  <section id="records" class="screen hidden">
+    <div class="panel wide">
+      <header class="panel-head"><h2>Records</h2><button class="btn btn-close" data-back>✕</button></header>
+      <div class="records-wrap">
+        <div><h3>Top 10 runs</h3><table id="lbTable"></table></div>
+        <div><h3>Career</h3><div id="careerStats" class="career"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Settings -->
+  <section id="settings" class="screen hidden">
+    <div class="panel">
+      <header class="panel-head"><h2>Settings</h2><button class="btn btn-close" data-back>✕</button></header>
+      <label class="toggle"><input type="checkbox" id="setMusic"> Music</label>
+      <label class="toggle"><input type="checkbox" id="setSfx"> Sound effects</label>
+      <label class="toggle"><input type="checkbox" id="setShake"> Screen shake</label>
+      <h3>How to play</h3>
+      <ul class="howto">
+        <li><b>Jump:</b> Space / W / ↑ / left click · touch: tap the <b>right</b> half. Tap again in the air to double jump.</li>
+        <li><b>Dive:</b> hold S / ↓ / Shift / right mouse · touch: hold the <b>left</b> half. Diving falls faster and speeds you up on red downslopes (but slows you on green climbs).</li>
+        <li><b>Perfect landing:</b> touch down smoothly on a downslope → speed boost, +chain, fills the ⚡ meter.</li>
+        <li><b>Chain:</b> perfects, stomps, catalysts and big air build a chain (score multiplier). Let the timer run out to cash it in for a bonus; a belly-flop or hit loses it.</li>
+        <li><b>Blitz Mode:</b> full ⚡ meter = invincible, ×2 score, smash everything.</li>
+        <li><b>Hazards:</b> gap-downs (jump them), bear claws, bears (stomp from above!), flash-crash candles (watch for <b style="color:#ff4d6d">!</b>).</li>
+        <li>P / Esc pause · R restart · M mute</li>
+      </ul>
+      <button id="btnReset" class="btn btn-danger">Reset all progress</button>
+    </div>
+  </section>
+
+  <!-- Pause -->
+  <section id="pause" class="screen hidden">
+    <div class="panel">
+      <h2>Paused</h2>
+      <div class="missions" id="pMissions"></div>
+      <button id="btnResume" class="btn btn-primary btn-big">▶ Resume</button>
+      <div class="menu-row">
+        <button id="btnRestartP" class="btn">↻ Restart (R)</button>
+        <button id="btnQuit" class="btn">⌂ Menu</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Run summary -->
+  <section id="over" class="screen hidden">
+    <div class="panel over-panel">
+      <p class="cause" id="oCause"></p>
+      <div id="oBest" class="new-best hidden">NEW PERSONAL BEST!</div>
+      <div class="big-score" id="oScore">$0</div>
+      <div class="over-grid" id="oStats"></div>
+      <div id="oRewards" class="rewards"></div>
+      <div class="missions" id="oMissions"></div>
+      <p id="oGoal" class="goal"></p>
+      <button id="btnAgain" class="btn btn-primary btn-big">↻ RUN IT BACK <small>Space / R</small></button>
+      <div class="menu-row">
+        <button id="btnShopO" class="btn">🛒 Shop<span id="shopBadgeO" class="badge hidden">0</span></button>
+        <button id="btnMenuO" class="btn">⌂ Menu</button>
+      </div>
+    </div>
+  </section>
+
+  <div id="countdown" class="hidden"></div>
+  <div id="toasts" aria-live="polite"></div>
+
+  <script src="js/util.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/meta.js"></script>
+  <script src="js/world.js"></script>
+  <script src="js/game.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/main.js"></script>
+
+  <script src="../../shared/playtime.js" data-game="blitz-rush" defer></script>
+</body>
+</html>
