@@ -42,6 +42,7 @@
         <button class="btn" data-open="records">📈 Records</button>
         <button class="btn" data-open="settings">⚙️</button>
       </div>
+      <div class="goals" id="mGoals"></div>
       <div class="missions" id="mMissions"></div>
       <p class="controls-hint" id="controlsHint"></p>
       <p class="portrait-hint">📱 Tip: rotate to landscape to see further ahead</p>
@@ -83,6 +84,8 @@
       <label class="toggle"><input type="checkbox" id="setMusic"> Music</label>
       <label class="toggle"><input type="checkbox" id="setSfx"> Sound effects</label>
       <label class="toggle"><input type="checkbox" id="setShake"> Screen shake</label>
+      <label class="toggle"><input type="checkbox" id="setGhost"> Ghost of your best run</label>
+      <label class="toggle"><input type="checkbox" id="setHints"> Beginner hints (landing marker, dive prompts)</label>
       <h3>How to play</h3>
       <ul class="howto">
         <li><b>Jump:</b> Space / W / ↑ / left click · touch: tap the <b>right</b> half. Tap again in the air to double jump.</li>
@@ -91,6 +94,10 @@
         <li><b>Chain:</b> perfects, stomps, catalysts and big air build a chain (score multiplier). Let the timer run out to cash it in for a bonus; a belly-flop or hit loses it.</li>
         <li><b>Blitz Mode:</b> full ⚡ meter = invincible, ×2 score, smash everything.</li>
         <li><b>Hazards:</b> gap-downs (jump them), bear claws, bears (stomp from above!), flash-crash candles (watch for <b style="color:#ff4d6d">!</b>).</li>
+        <li><b>Market regimes:</b> the chart rotates between 🐂 Bull Run, 〰️ Sideways Chop, 📉 Flash Crash and 🚀 Crypto Mania, each with its own terrain and hazards.</li>
+        <li><b>⛔ Circuit Breaker:</b> a telegraphed gauntlet. Reach the green gate for a big payout.</li>
+        <li><b>Perks:</b> at distance milestones, pick 1 of 3 perks for the rest of the run (keys 1 / 2 / 3, or click/tap). Promotions add new perks to the pool.</li>
+        <li><b>Close Call:</b> skim just over a hazard, or land right past a gap's edge, for bonus score + ⚡.</li>
         <li>P / Esc pause · R restart · M mute</li>
       </ul>
       <button id="btnReset" class="btn btn-danger">Reset all progress</button>
@@ -110,21 +117,32 @@
     </div>
   </section>
 
+  <!-- Perk pick (mid-run, game is frozen while choosing) -->
+  <section id="perk" class="screen hidden">
+    <div class="panel perk-panel">
+      <h2>Pick a perk</h2>
+      <p class="perk-sub" id="perkSub">Lasts for the rest of this run</p>
+      <div class="perk-cards" id="perkCards"></div>
+      <p class="perk-keys" id="perkKeys">Press 1 · 2 · 3, or click a card</p>
+    </div>
+  </section>
+
   <!-- Run summary -->
   <section id="over" class="screen hidden">
     <div class="panel over-panel">
-      <p class="cause" id="oCause"></p>
+      <div class="death-row"><img id="oShot" class="death-shot hidden" alt="The moment of your crash"><div><p class="cause" id="oCause"></p><p class="tip" id="oTip"></p></div></div>
       <div id="oBest" class="new-best hidden">NEW PERSONAL BEST!</div>
       <div class="big-score" id="oScore">$0</div>
       <div class="over-grid" id="oStats"></div>
-      <div id="oRewards" class="rewards"></div>
-      <div class="missions" id="oMissions"></div>
-      <p id="oGoal" class="goal"></p>
-      <button id="btnAgain" class="btn btn-primary btn-big">↻ RUN IT BACK <small>Space / R</small></button>
-      <div class="menu-row">
+      <div class="over-actions">
+        <button id="btnAgain" class="btn btn-primary btn-big">↻ RUN IT BACK <small>Space / R</small></button>
         <button id="btnShopO" class="btn">🛒 Shop<span id="shopBadgeO" class="badge hidden">0</span></button>
         <button id="btnMenuO" class="btn">⌂ Menu</button>
       </div>
+      <div id="oRewards" class="rewards"></div>
+      <div id="oPerks" class="perk-row"></div>
+      <div class="missions" id="oMissions"></div>
+      <div id="oGoal" class="goals"></div>
     </div>
   </section>
 
