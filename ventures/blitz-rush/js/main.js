@@ -5,7 +5,8 @@
   const M = BR.meta, UI = BR.ui, $ = UI.$, audio = BR.audio;
   const canvas = $('game'), ctx = canvas.getContext('2d', { alpha: false });
   let W = 0, H = 0, dpr = 1;
-  let state = 'menu';            // 'menu' | 'playing' | 'paused' | 'countdown' | 'over'
+  let state = 'menu';            // 'menu' | 'playing' | 'paused' | 'countdown' | 'over' | 'perk'
+  let perkChoices = null, perkShownAt = 0, deathShot = null;
   let game = null, dailyRun = false, backdrop = new BR.Game.Backdrop();
   let overShownAt = 0, returnTo = 'menu', touchSeen = matchMedia('(pointer: coarse)').matches;
   const input = { jump: false, dive: false };
@@ -13,7 +14,7 @@
 
   // ---------- public state for the league playtime tracker ----------
   window.BlitzRush = {
-    version: '1.0.0',
+    version: '2.0.0',
     get state() { return state; },
     /** true only while a run is actively being played (not menus, pause, countdown or summary) */
     isPlaying: () => state === 'playing' && !document.hidden,
@@ -24,6 +25,7 @@
     // Drop focus from any clicked button so Space/Enter never re-activates it mid-run.
     if (document.activeElement && document.activeElement !== document.body) document.activeElement.blur();
     $('hudButtons').classList.toggle('hidden', !(s === 'playing' || s === 'countdown'));
+    diveKeys.clear(); divePointers.clear(); input.dive = false; input.jump = false;
     window.dispatchEvent(new CustomEvent('blitzrush:state', { detail: { state: s } }));
   }
 
@@ -53,9 +55,13 @@
     unlockAudio();
     dailyRun = daily;
     const seed = daily ? M.dailySeed() : (Math.random() * 2 ** 31) | 0;
+    const lo = M.loadout();
+    lo.ghost = M.save.settings.ghost !== false ? M.getGhost(daily) : null;
+    lo.bestDist = daily ? 0 : M.save.bestDist;
+    deathShot = null; perkChoices = null;
     game = new BR.Game({
-      seed, daily, loadout: M.loadout(), tutorial: M.save.tutorial < 2,
-      hooks: { onTick: liveAchievements, onOver: endRun },
+      seed, daily, loadout: lo, tutorial: M.save.tutorial < 2,
+      hooks: { onTick: liveAchievements, onOver: endRun, onPerk: openPerk },
     });
     input.jump = false;
     UI.hideAll();
@@ -64,10 +70,41 @@
   function liveAchievements(stats) {
     for (const a of M.checkAchievements(stats, false)) { UI.toast('🏆', a.name, `${a.desc} · +${a.reward} coins`); audio.sfx.achievement(); }
   }
+  // ---------- perk picker (the run is frozen while it is open) ----------
+  function openPerk(choices) {
+    perkChoices = choices; perkShownAt = performance.now();
+    UI.renderPerk(choices, game);
+    UI.show('perk'); setState('perk');
+    audio.sfx.perkOpen(); audio.setIntensity(0.1);
+  }
+  function pickPerk(i) {
+    if (state !== 'perk' || !perkChoices || !perkChoices[i]) return;
+    if (performance.now() - perkShownAt < 350) return;          // ignore a jump press that was already in flight
+    game.applyPerk(perkChoices[i].id);
+    perkChoices = null;
+    UI.hideAll(); setState('playing');
+  }
+  $('mMissions').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-swap]'); if (!b) return;
+    unlockAudio();
+    if (M.swapMission(+b.dataset.swap)) { audio.sfx.buy(); UI.renderMenu(); } else audio.sfx.deny();
+  });
+  $('perkCards').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-perk]'); if (!b) return;
+    const i = [...$('perkCards').children].indexOf(b); pickPerk(i);
+  });
+  // Snapshot of the crash (with the killer highlighted) for the summary screen.
+  function captureDeath() {
+    try {
+      const c = document.createElement('canvas'), w = 320, h = Math.round(320 * H / W);
+      c.width = w; c.height = h; c.getContext('2d').drawImage(canvas, 0, 0, w, h);
+      deathShot = c.toDataURL('image/jpeg', 0.7);
+    } catch (e) { deathShot = null; }
+  }
   function endRun(stats) {
     M.save.tutorial++;
     const res = M.finishRun(stats, dailyRun);
-    UI.renderOver(stats, res, dailyRun);
+    UI.renderOver(stats, res, dailyRun, deathShot);
     UI.show('over');
     overShownAt = performance.now();
     setState('over');
@@ -107,8 +144,10 @@
     const dt = Math.min(0.05, (now - last) / 1000); last = now;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     if (game && (state === 'playing' || state === 'over')) game.update(dt, input);
-    if (game) game.render(ctx, W, H, { touch: touchSeen, shake: M.save.settings.shake });
-    else backdrop.render(ctx, W, H, dt);
+    if (game) {
+      game.render(ctx, W, H, { touch: touchSeen, shake: M.save.settings.shake });
+      if (!game.alive && !deathShot && game.dying > 0.45) captureDeath();
+    } else backdrop.render(ctx, W, H, dt);
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
@@ -125,6 +164,9 @@
       if (DIVE.includes(k)) diveKeys.add(k);
       if (k === 'KeyP' || k === 'Escape') pause();
       if (k === 'KeyR') restart();
+    } else if (state === 'perk') {
+      const n = { Digit1: 0, Digit2: 1, Digit3: 2, Numpad1: 0, Numpad2: 1, Numpad3: 2 }[k];
+      if (n != null && !e.repeat) pickPerk(n);
     } else if (state === 'paused') {
       if (k === 'KeyP' || k === 'Escape' || k === 'Enter' || k === 'Space') resume();
       if (k === 'KeyR') restart();
@@ -193,6 +235,7 @@
   });
   const bindToggle = (id, key) => $(id).addEventListener('change', (e) => { M.save.settings[key] = e.target.checked; M.persist(); applyAudioSettings(); });
   bindToggle('setMusic', 'music'); bindToggle('setSfx', 'sfx'); bindToggle('setShake', 'shake');
+  bindToggle('setGhost', 'ghost'); bindToggle('setHints', 'hints');
   $('btnReset').addEventListener('click', () => {
     if (confirm('Reset ALL Blitz Rush progress (coins, upgrades, records)? This cannot be undone.')) { M.reset(); applyAudioSettings(); UI.show('menu'); }
   });
