@@ -6,7 +6,7 @@ BR.ui = (() => {
   const M = BR.meta, { fmtInt, fmtMoney, fmtTime } = BR.util;
   const SCREENS = ['menu', 'shop', 'trophies', 'records', 'settings', 'pause', 'over'];
   let shopTab = 'upgrades';
-  const esc = (s) => String(s).replace(/[&<>\u0022]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
   function show(id) {
     for (const s of SCREENS) $(s).classList.toggle('hidden', s !== id);
