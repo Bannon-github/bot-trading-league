@@ -52,6 +52,12 @@ button:disabled{opacity:.4;cursor:default}
 .pop{animation:pp .25s}
 @keyframes pp{50%{transform:scale(1.18)}}
 .hidden{display:none!important}
+.goal{background:linear-gradient(90deg,#1b2a4a,#141a2b);border:1px solid #3a4f86;border-radius:12px;padding:8px 10px;margin-bottom:8px;font-size:13px;display:flex;justify-content:space-between;gap:8px;align-items:center}
+.goal b{color:var(--gold)}
+.gbar{height:5px;background:#26304d;border-radius:3px;margin-top:4px;overflow:hidden}.gbar i{display:block;height:100%;background:var(--gold);transition:width .3s}
+.toast{position:fixed;left:50%;top:18px;transform:translateX(-50%);background:#ffd166;color:#1a1300;font-weight:800;padding:10px 16px;border-radius:12px;z-index:20;box-shadow:0 6px 24px #0008;animation:tin .3s}
+@keyframes tin{from{opacity:0;transform:translate(-50%,-10px)}}
+.sets button{display:flex;justify-content:space-between;width:100%;margin-top:6px;text-align:left}
 .timer{font-variant-numeric:tabular-nums}
 </style>
 </head>
@@ -66,12 +72,15 @@ button:disabled{opacity:.4;cursor:default}
   </div>
 
   <div id="menu" class="menu">
-    <button class="big pri" id="bDaily">Daily Cipher</button>
+    <button class="big pri" id="bCont">Continue campaign</button>
+    <div class="goal" id="goalMenu"></div>
+    <button class="big" id="bDaily">Daily Cipher</button>
     <button class="big" id="bBlitz">Rush Mode (3 minutes, crack as many as you can)</button>
     <div>
       <div style="color:var(--dim);font-size:13px">Campaign: 40 levels, each harder than the last</div>
       <div class="levels" id="levels"></div>
     </div>
+    <button id="bSets">Symbol sets (spend coins)</button>
     <button id="bHelp">How to play</button>
   </div>
 
@@ -80,6 +89,7 @@ button:disabled{opacity:.4;cursor:default}
       <div class="chip" id="gTitle">Level 1</div>
       <div class="chip timer" id="gInfo"></div>
     </div>
+    <div class="goal" id="goalBox"></div>
     <div id="board"></div>
     <div class="msg" id="msg"></div>
     <div id="pal"></div>
@@ -98,11 +108,12 @@ button:disabled{opacity:.4;cursor:default}
 (function(){
 "use strict";
 var COLORS=["#ff5e7a","#ffd166","#38f2c1","#4ea8ff","#c77dff","#ff9f43","#9be15d","#f2f5ff"];
-var SYMS=["A","B","C","D","E","F","G","H"];
+var SETS=[{n:"Letters",s:["A","B","C","D","E","F","G","H"],c:0},{n:"Numbers",s:["1","2","3","4","5","6","7","8"],c:100},{n:"Shapes",s:["▲","●","■","◆","★","✚","⬟","☾"],c:250},{n:"Greek",s:["α","β","γ","δ","ε","ζ","η","θ"],c:400},{n:"Runes",s:["ᚠ","ᚢ","ᚦ","ᚨ","ᚱ","ᚲ","ᚷ","ᚹ"],c:600},{n:"Cards",s:["♠","♥","♦","♣","♔","♕","♖","♘"],c:900}];
+var SYMS=SETS[0].s;
 var S=load();
 function load(){try{return JSON.parse(localStorage.getItem("cipher-crack-save"))||{};}catch(e){return {};}}
 function save(){try{localStorage.setItem("cipher-crack-save",JSON.stringify(S));}catch(e){}}
-S.coins=S.coins||60;S.lv=S.lv||{};S.streak=S.streak||0;S.best=S.best||0;
+S.coins=S.coins||60;S.owned=S.owned||{Letters:1};S.set=S.set||"Letters";SETS.forEach(function(x){if(x.n===S.set)SYMS=x.s;});S.lv=S.lv||{};S.streak=S.streak||0;S.best=S.best||0;
 var $=function(id){return document.getElementById(id);};
 
 function levelSpec(n){ // n = 1..40
@@ -121,11 +132,29 @@ function today(){var d=new Date();return d.getFullYear()+"-"+(d.getMonth()+1)+"-
 function hashStr(s){var h=2166136261;for(var i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;}
 
 var G=null,timerId=null;
+var GOALS=[["solves",3,"Crack 3 codes"],["three",1,"Earn a 3-star solve"],["fast",1,"Crack a code in 4 guesses or fewer"],["solves",5,"Crack 5 more codes"],["nohint",3,"Crack 3 in a row without hints"],["rush",5,"Crack 5+ codes in one Rush"],["three",2,"Earn two more 3-star solves"],["solves",8,"Crack 8 more codes"],["fast",2,"Crack 2 codes in 4 guesses or fewer"],["rush",8,"Crack 8+ codes in one Rush"]];
+var SES={i:0,p:0,mult:1,nh:0,done:0};
+function goalAt(i){if(i<GOALS.length)return GOALS[i];var k=i-GOALS.length;var kinds=[["solves",10+k*2,"Crack "+(10+k*2)+" more codes"],["three",2+Math.floor(k/3),"Earn "+(2+Math.floor(k/3))+" more 3-star solves"],["rush",8+Math.floor(k/3),"Crack "+(8+Math.floor(k/3))+"+ codes in one Rush"]];return kinds[k%3];}
+function goalReward(i){return 40+i*15;}
+function goalEv(type,d){var g=goalAt(SES.i),hit=false;
+  if(type==="solve"){SES.nh=d.nh?0:SES.nh+1;
+    if(g[0]==="solves")SES.p++;if(g[0]==="three"&&d.stars===3)SES.p++;if(g[0]==="fast"&&d.used<=4)SES.p++;if(g[0]==="nohint")SES.p=SES.nh;}
+  if(type==="rush"&&g[0]==="rush")SES.p=Math.max(SES.p,d.solved>=g[1]?g[1]:0);
+  if(type==="hint"){SES.nh=0;if(g[0]==="nohint")SES.p=0;}
+  if(SES.p>=g[1]){var r=Math.round(goalReward(SES.i)*SES.mult);S.coins+=r;save();SES.done++;SES.mult=Math.round((1+SES.done*0.25)*100)/100;toast("Goal complete: "+g[2]+"  +"+r+" coins. Coin bonus now x"+SES.mult);SES.i++;SES.p=0;refresh();}
+  drawGoal();}
+function drawGoal(){var g=goalAt(SES.i),pct=Math.min(100,SES.p/g[1]*100),h='<div style="flex:1">Session goal '+(SES.i+1)+': '+g[2]+' ('+SES.p+'/'+g[1]+')<div class="gbar"><i style="width:'+pct+'%"></i></div></div><b>+'+Math.round(goalReward(SES.i)*SES.mult)+'</b>';
+  var a=$("goalBox"),b=$("goalMenu");if(a)a.innerHTML=h;if(b)b.innerHTML=h+'<span style="color:var(--dim);font-size:11px">coin bonus x'+SES.mult+'</span>';}
+function toast(t){var d=document.createElement("div");d.className="toast";d.textContent=t;document.body.appendChild(d);setTimeout(function(){d.remove();},3200);}
+function nextLevel(){var u=1;for(var i=1;i<=40;i++){if(S.lv[i])u=i+1;}return Math.min(u,40);}
+function sets(){var h='<h2>Symbol sets</h2><div class="sets">';SETS.forEach(function(x,i){var own=S.owned[x.n];h+='<button data-i="'+i+'"'+(x.n===S.set?' class="pri"':'')+'><span>'+x.n+' '+x.s.slice(0,6).join(" ")+'</span><span>'+(x.n===S.set?"In use":own?"Use":x.c+" coins")+'</span></button>';});
+  h+='</div><button id="oOk" style="width:100%;margin-top:10px">Close</button>';show(h);$("oOk").onclick=hide;
+  Array.prototype.forEach.call(document.querySelectorAll(".sets button"),function(b){b.onclick=function(){var x=SETS[+b.dataset.i];if(!S.owned[x.n]){if(S.coins<x.c){toast("Need "+x.c+" coins");return;}S.coins-=x.c;S.owned[x.n]=1;toast("Unlocked "+x.n+"!");}S.set=x.n;SYMS=x.s;save();refresh();sets();};});}
 function refresh(){$("coins").textContent=S.coins;var st=0;for(var k in S.lv)st+=S.lv[k];$("stars").textContent=st;$("streak").textContent=S.streak;
   var L=$("levels");L.innerHTML="";var unlocked=1;for(var i=1;i<=40;i++){if(S.lv[i])unlocked=i+1;}
   for(i=1;i<=40;i++){(function(n){var b=document.createElement("button");b.innerHTML=n+"<small>"+(S.lv[n]?"★".repeat(S.lv[n]):"&nbsp;")+"</small>";
     if(S.lv[n])b.className="done";if(n>unlocked)b.disabled=true;b.onclick=function(){start("level",n);};L.appendChild(b);})(i);}
-  var d=S.daily===today();$("bDaily").textContent=d?"Daily Cipher: solved today ✓ (play again for practice)":"Daily Cipher";}
+  var d=S.daily===today();$("bCont").textContent="Continue campaign: Level "+nextLevel();$("bDaily").textContent=d?"Daily Cipher: solved today ✓ (play again for practice)":"Daily Cipher";}
 
 function start(mode,n){
   var sp,code,title,r;
@@ -136,10 +165,10 @@ function start(mode,n){
   G={mode:mode,n:n,sp:sp,code:code,rows:[],cur:[],hints:{},title:title,over:false};
   if(mode==="rush"){G.solved=0;G.end=Date.now()+180000;G.rushPts=0;}
   $("menu").classList.add("hidden");$("game").classList.remove("hidden");$("gTitle").textContent=title;
-  buildPal();fillHints();render();tick();clearInterval(timerId);timerId=setInterval(tick,250);msg(mode==="rush"?"Crack codes fast. Every solve adds 20 seconds.":"");
+  buildPal();fillHints();drawGoal();render();tick();clearInterval(timerId);timerId=setInterval(tick,250);msg(mode==="rush"?"Crack codes fast. Every solve adds 20 seconds.":"");
 }
 function rushSpec(k){return {len:Math.min(3+Math.floor(k/3),6),cols:Math.min(5+Math.floor(k/2),8),dup:k>1,tries:99};}
-function nextRush(){G.solved++;G.rushPts+=Math.max(10,60-G.rows.length*6)*G.sp.len;G.end+=20000;G.sp=rushSpec(G.solved);G.code=makeCode(G.sp,rng(Date.now()));G.rows=[];G.cur=[];G.hints={};buildPal();fillHints();render();}
+function nextRush(){goalEv("solve",{stars:G.rows.length<=4?3:1,used:G.rows.length,nh:Object.keys(G.hints).length});G.solved++;G.rushPts+=Math.max(10,60-G.rows.length*6)*G.sp.len;G.end+=20000;G.sp=rushSpec(G.solved);G.code=makeCode(G.sp,rng(Date.now()));G.rows=[];G.cur=[];G.hints={};buildPal();fillHints();render();}
 function tick(){if(!G)return;var el=$("gInfo");
   if(G.mode==="rush"){var left=Math.max(0,G.end-Date.now());el.textContent="⏱ "+Math.ceil(left/1000)+"s | solved "+G.solved;if(left<=0&&!G.over)finishRush();}
   else el.textContent="Guess "+Math.min(G.rows.length+1,G.sp.tries)+" of "+G.sp.tries+" | "+G.sp.cols+" symbols"+(G.sp.dup?", repeats allowed":", no repeats");}
@@ -155,21 +184,21 @@ function go(){if(!G||G.over)return;if(G.cur.length<G.sp.len){msg("Fill all "+G.s
 function fillHints(){while(G.hints[G.cur.length]!==undefined&&G.cur.length<G.sp.len)G.cur.push(G.hints[G.cur.length]);}
 function hint(){if(!G||G.over)return;if(S.coins<20){msg("Not enough coins. Solve levels to earn more.");shake();return;}
   var open=[];for(var i=0;i<G.sp.len;i++)if(G.hints[i]===undefined)open.push(i);if(open.length<=1){msg("Last slot: you've got this.");return;}
-  var k=open[Math.floor(Math.random()*open.length)];G.hints[k]=G.code[k];S.coins-=20;save();refresh();
+  var k=open[Math.floor(Math.random()*open.length)];G.hints[k]=G.code[k];S.coins-=20;save();refresh();goalEv("hint");
   var keep=G.cur.slice(0,k);G.cur=[];for(i=0;i<keep.length;i++){if(G.hints[i]!==undefined)G.cur.push(G.hints[i]);else G.cur.push(keep[i]);}if(G.cur.length===k)fillHints();
   msg("Slot "+(k+1)+" revealed.");render();}
 function win(){G.over=true;var used=G.rows.length,t=G.sp.tries,nh=Object.keys(G.hints).length;
-  var stars=used<=Math.ceil(t*0.5)&&!nh?3:used<=Math.ceil(t*0.75)?2:1;var coins=10+stars*10+G.sp.len*2;
+  var stars=used<=Math.ceil(t*0.5)&&!nh?3:used<=Math.ceil(t*0.75)?2:1;var coins=Math.round((10+stars*10+G.sp.len*2)*SES.mult);
   if(G.mode==="level"){S.lv[G.n]=Math.max(S.lv[G.n]||0,stars);}
   if(G.mode==="daily"&&S.daily!==today()){var y=new Date();y.setDate(y.getDate()-1);var ys=y.getFullYear()+"-"+(y.getMonth()+1)+"-"+y.getDate();S.streak=S.lastDaily===ys?S.streak+1:1;S.lastDaily=today();S.daily=today();coins+=25+S.streak*5;}
-  S.coins+=coins;save();refresh();render(true);
+  S.coins+=coins;save();refresh();render(true);goalEv("solve",{stars:stars,used:used,nh:nh});
   var next=G.mode==="level"&&G.n<40?'<button class="pri big" id="oNext" style="width:100%;margin-top:8px">Next level</button>':'';
   show('<h2>Cracked!</h2><div class="stars">'+"★".repeat(stars)+"☆".repeat(3-stars)+'</div><p>Solved in '+used+' of '+t+' guesses. +'+coins+' coins'+(G.mode==="daily"?"<br>Daily streak: "+S.streak:"")+'</p>'+next+'<button id="oAgain" style="width:100%;margin-top:8px">'+(G.mode==="level"?"Replay":"Play again")+'</button><button id="oMenu" style="width:100%;margin-top:8px">Menu</button>');
   if($("oNext"))$("oNext").onclick=function(){hide();start("level",G.n+1);};$("oAgain").onclick=function(){hide();start(G.mode,G.n);};$("oMenu").onclick=function(){hide();menu();};}
 function lose(){G.over=true;render(true);show('<h2>Locked out</h2><p>The code was:</p><div class="slots" style="justify-content:center;margin:10px 0">'+G.code.map(function(c){return '<div class="slot f" style="background:'+COLORS[c]+'">'+SYMS[c]+'</div>';}).join("")+'</div><button class="pri big" id="oAgain" style="width:100%">Try again</button><button id="oMenu" style="width:100%;margin-top:8px">Menu</button>');
   $("oAgain").onclick=function(){hide();start(G.mode,G.n);};$("oMenu").onclick=function(){hide();menu();};}
-function finishRush(){G.over=true;var pts=G.rushPts,best=pts>S.best;if(best)S.best=pts;var coins=G.solved*15;S.coins+=coins;save();refresh();
-  show('<h2>Time!</h2><p>You cracked <b>'+G.solved+'</b> codes for <b>'+pts+'</b> points.<br>'+(best?"New personal best!":"Best: "+S.best)+'<br>+'+coins+' coins</p><button class="pri big" id="oAgain" style="width:100%">Rush again</button><button id="oMenu" style="width:100%;margin-top:8px">Menu</button>');
+function finishRush(){G.over=true;var pts=G.rushPts,best=pts>S.best;if(best)S.best=pts;var coins=Math.round(G.solved*15*SES.mult);S.coins+=coins;save();refresh();
+  goalEv("rush",{solved:G.solved});show('<h2>Time!</h2><p>You cracked <b>'+G.solved+'</b> codes for <b>'+pts+'</b> points.<br>'+(best?"New personal best!":"Best: "+S.best)+'<br>+'+coins+' coins</p><button class="pri big" id="oAgain" style="width:100%">Rush again</button><button id="oMenu" style="width:100%;margin-top:8px">Menu</button>');
   $("oAgain").onclick=function(){hide();start("rush");};$("oMenu").onclick=function(){hide();menu();};}
 function render(reveal){var B=$("board");B.innerHTML="";var tot=G.mode==="rush"?G.rows.length+1:G.sp.tries;
   for(var r=0;r<tot;r++){var row=document.createElement("div");row.className="row"+(r===G.rows.length&&!G.over?" cur":"");
@@ -188,11 +217,11 @@ function show(h){$("ovc").innerHTML=h;$("ov").classList.remove("hidden");}
 function hide(){$("ov").classList.add("hidden");}
 function menu(){clearInterval(timerId);G=null;$("game").classList.add("hidden");$("menu").classList.remove("hidden");refresh();}
 function help(){show('<h2>How to play</h2><div class="help"><p>A secret code of colored symbols is hidden. Build a guess and press <b>Check</b>.</p><p><span class="peg b" style="display:inline-block"></span> means a symbol is in the right place. <span class="peg w" style="display:inline-block"></span> means the symbol is in the code but in a different place. The pegs do not tell you which slot they belong to.</p><p>Use the clues to narrow it down before you run out of guesses. Fewer guesses earn more stars.</p><p>Keys 1 to 8 pick symbols, Backspace undoes, Enter checks, H buys a hint.</p><p>Hints cost 20 coins and reveal one slot. Solving earns coins, and the Daily Cipher pays a streak bonus.</p></div><button class="pri big" id="oOk" style="width:100%;margin-top:10px">Got it</button>');$("oOk").onclick=hide;}
-$("bDaily").onclick=function(){start("daily");};$("bBlitz").onclick=function(){start("rush");};$("bHelp").onclick=help;
+$("bDaily").onclick=function(){start("daily");};$("bBlitz").onclick=function(){start("rush");};$("bHelp").onclick=help;$("bSets").onclick=sets;$("bCont").onclick=function(){start("level",nextLevel());};
 $("bBack").onclick=menu;$("bDel").onclick=del;$("bGo").onclick=go;$("bHint").onclick=hint;
 document.addEventListener("keydown",function(e){if(!$("ov").classList.contains("hidden")){if(e.key==="Enter"){var b=$("ovc").querySelector("button.pri");if(b)b.click();}return;}
   if(!G)return;var k=parseInt(e.key,10);if(k>=1&&k<=G.sp.cols)add(k-1);else if(e.key==="Backspace")del();else if(e.key==="Enter")go();else if(e.key==="h"||e.key==="H")hint();else if(e.key==="Escape")menu();});
-refresh();if(!S.seenHelp){S.seenHelp=1;save();help();}
+refresh();drawGoal();start("level",nextLevel());if(!S.seenHelp){S.seenHelp=1;save();msg("Pick symbols (or keys 1-8), then Check. Green peg = right spot, white = wrong spot.");}
 })();
 </script>
 <script src="../../shared/playtime.js?v=2" data-game="cipher-crack" defer></script>
