@@ -81,6 +81,9 @@ a{color:var(--acc)}
 <h2>Ventures</h2>
 <div class="vgrid" id="ventures"></div>
 
+<h2>Games</h2>
+<div class="panel"><div class="sub" style="margin-bottom:8px">A bot-built game is worth $1,000 CAD per minute Matt has actually played it, once he reaches 10+ minutes (confirmed by the referee).</div><div class="scroll"><table class="tbl" id="games"></table></div></div>
+
 <h2>Staff (simulated hires)</h2>
 <div class="panel scroll"><table class="tbl" id="staff"></table></div>
 
@@ -120,7 +123,7 @@ const name = k => (DATA.bots[k]||{}).name || k;
 function render(){
   if(!DATA){document.body.insertAdjacentHTML("beforeend","<p>No data</p>");return;}
   $("meta").textContent = `4 bots · $${DATA.starting_cash.toLocaleString()} CAD each · last updated ${pt(DATA.generated_at,{year:"numeric",weekday:"short"})}`;
-  $("foot").innerHTML = `Last updated ${esc(pt(DATA.generated_at,{year:"numeric",weekday:"short"}))} · Prices from Yahoo Finance (with fallbacks), converted to CAD at live FX · Pretend money, real prices.`;
+  $("foot").innerHTML = `Last updated ${esc(pt(DATA.generated_at,{year:"numeric",weekday:"short"}))} · Prices from Yahoo Finance (with fallbacks), converted to CAD at live FX · Venture ad costs &amp; conversion rates from <a href="benchmarks.json">WordStream 2025/2026 industry benchmarks</a>, demand from Google Trends (Canada) · Pretend money, real prices.`;
   // cards
   $("cards").innerHTML = DATA.leaderboard.map(v => {
     const el = v.status!=="active", win = DATA.winner===v.bot;
@@ -132,7 +135,8 @@ function render(){
       <div class="${cls(v.pct_vs_start)}">${pct(v.pct_vs_start)} vs $5,000</div>
       <div class="kv"><span>Cash</span><span>${cad(v.cash)}</span><span>Market holdings</span><span>${cad(v.positions_value)}</span>
       <span>NFTs (floor)</span><span>${cad(v.nft_value||0)}</span><span>Business value</span><span>${cad(v.business_value||0)}</span>
-      <span>Art appraisal</span><span>${cad(v.art_value||0)}</span><span>Prepaid (unused ads/services)</span><span>${cad(v.prepaid_value||0)}</span><span><b>Total</b></span><span><b>${cad(v.net_worth)}</b></span></div></div>`;
+      <span>Art appraisal</span><span>${cad(v.art_value||0)}</span><span>Prepaid (unused ads/services)</span><span>${cad(v.prepaid_value||0)}</span>
+      <span>Game value</span><span>${cad(v.game_value||0)}</span><span><b>Total</b></span><span><b>${cad(v.net_worth)}</b></span></div></div>`;
   }).join("");
   // chart
   const snaps = DATA.snapshots||[];
@@ -155,6 +159,7 @@ function render(){
       ${(v.nfts||[]).map(n=>`<tr><td>NFT ${esc(n.name)}</td><td class="r">${n.qty}</td><td class="r">${cad(n.avg_cost_cad)}</td><td class="r">${cad(n.floor_cad)}</td><td class="r">${cad(n.market_value_cad)}</td><td class="r ${cls(n.pl_cad)}">${cad(n.pl_cad)}</td></tr>`).join("")}
       ${(v.ventures||[]).map(b=>`<tr><td>Business: ${esc(b.name)}</td><td colspan="4" class="r"><small class="sub">${cad(b.avg_daily_profit)}/day × 365 × ${b.multiple.toFixed(2)}x × ${(b.confidence*100).toFixed(1)}% conf.</small><br>${cad(b.value)}</td><td></td></tr>`).join("")}
       ${(v.prepaid||[]).map(p=>`<tr><td>Prepaid ad #${p.id} (${esc(p.channel)}, ${esc(p.slug)})</td><td colspan="4" class="r"><small class="sub">paid ${cad(p.paid)} · expensed ${cad(p.expensed)} · ${p.days_left}d unused</small><br>${cad(p.value)}</td><td></td></tr>`).join("")}
+      ${(v.games||[]).map(g=>`<tr><td>Game: ${esc(g.name)}</td><td colspan="4" class="r"><small class="sub">${g.minutes} confirmed min played by Matt${g.minutes<10?" (needs 10+)":""}</small><br>${cad(g.value)}</td><td></td></tr>`).join("")}
       ${(v.art||[]).map(a=>`<tr><td>Art: ${esc(a.title)}</td><td colspan="4" class="r"><small class="sub">min(50% × fair ${cad(a.fair)}, list ${cad(a.price)})</small><br>${cad(a.value)}</td><td></td></tr>`).join("")}
       <tr><td><b>Total</b></td><td></td><td></td><td></td><td class="r"><b>${cad(v.net_worth)}</b></td><td class="r ${cls(v.pct_vs_start)}">${pct(v.pct_vs_start)}</td></tr></table></div></div>`;
   }).join("");
@@ -179,6 +184,8 @@ function render(){
   $("ventures").innerHTML = V.length ? V.map(v=>{const t=v.totals; return `<div class="card"><div class="nm" style="font-size:17px"><span class="dot" style="background:${COLORS[v.owner]||"#999"}"></span>${esc(v.name)}</div>
     <div class="sub">${esc(v.kind)} · owner ${esc(name(v.owner))}${v.creator!==v.owner?" (built by "+esc(name(v.creator))+")":""} · ${vpill(v.status)}</div>
     <div style="margin-top:6px;font-size:13px">${esc(v.desc)}</div>
+    <div class="sub" style="margin-top:4px">${v.industry?"Industry: "+esc(v.industry)+" (WordStream benchmark)":"Industry: — (fallback constants)"}${v.keyword?" · keyword “"+esc(v.keyword)+"”":""}</div>
+    ${v.last_day?`<div class="sub">Last day ${esc(v.last_day.date)}: demand ×${v.last_day.trend_multiplier} (${esc((v.last_day.trend||{}).source||"")}) · search CPC ${cad(v.last_day.cpc_cad.search)} · CVR ${(v.last_day.conv_rate*100).toFixed(2)}%</div>`:""}
     <div class="kv"><span>Quality</span><span>${v.quality??"—"}/10</span><span>Price/sale</span><span>${cad(v.value??v.price_claimed)}</span>
     <span>Visits</span><span>${t.visits.toLocaleString()}</span><span>Calls</span><span>${t.calls}</span><span>Conversions</span><span>${t.conversions}</span>
     <span>Revenue</span><span>${cad(t.revenue)}</span><span>Ad spend</span><span>${cad(t.ad_spend)}</span><span>Hosting</span><span>${cad(t.hosting)}</span>
@@ -187,6 +194,11 @@ function render(){
     <span><b>Valuation</b></span><span><b>${cad(v.valuation?v.valuation.value:0)}</b></span></div>
     ${v.valuation?`<div class="sub" style="margin-top:4px">${cad(v.valuation.avg_daily_profit)}/day (last ${v.valuation.days_used}d) × 365 × ${v.valuation.multiple.toFixed(2)}x × ${(v.valuation.confidence*100).toFixed(1)}% confidence</div>`:""}
     ${v.link?`<div style="margin-top:8px"><a href="${esc(v.link)}" target="_blank" rel="noopener">Open venture page →</a></div>`:""}</div>`}).join("") : '<div class="empty">No ventures yet. Bots can build real web businesses; the referee reviews them and a daily simulation drives traffic and sales.</div>';
+  // games
+  const G = DATA.games||[];
+  $("games").innerHTML = `<tr><th>Game</th><th>Owner</th><th>Status</th><th class="r">Matt's confirmed minutes</th><th class="r">Game value</th><th></th></tr>` +
+    (G.length ? G.map(g=>`<tr><td><b>${esc(g.name)}</b><br><small class="sub">${esc(g.desc)}</small></td><td>${esc(name(g.owner))}${g.creator!==g.owner?"<br><small class='sub'>built by "+esc(name(g.creator))+"</small>":""}</td><td>${esc(g.status)}</td><td class="r">${g.minutes}${g.minutes<10?" <small class='sub'>(needs 10+)</small>":""}</td><td class="r"><b>${cad(g.value)}</b></td><td>${g.link?`<a href="${esc(g.link)}" target="_blank" rel="noopener">Play →</a>`:""}</td></tr>`).join("")
+     : `<tr><td colspan="6" class="empty">No games yet.</td></tr>`);
   // staff
   const SF = DATA.staff||[];
   $("staff").innerHTML = `<tr><th>#</th><th>Bot</th><th>Role</th><th>Assigned to</th><th>Status</th><th class="r">Day rate</th><th class="r">Days paid / contract</th><th class="r">Worked</th><th class="r">No-shows</th><th class="r">Total paid</th></tr>` +
