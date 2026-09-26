@@ -42,6 +42,38 @@ shots/            screenshots from the headless test runs
   (a red **!** shows where one will drop).
 - Speed, volatility, gap width and hazard density all ramp up with distance.
 
+## v2: depth pass
+- **Market regimes** rotate within every run (~every 850–1,150 m, with a calm border and a banner):
+  🐂 **Bull Run** (rallies, bears; every run opens here), 〰️ **Sideways Chop** (rhythmic short bumps, great
+  for Perfect chains, claws), 📉 **Flash Crash** (dumps, staircase crashes, gaps, falling candles),
+  🚀 **Crypto Mania** (huge pumps with sky coin arcs and 5× coins, wide gaps, more catalysts). Each regime has its
+  own palette (smoothly blended). The chart line stays green/red everywhere, so the core read never changes.
+  Flash Crash unlocks after run 1, Crypto Mania after run 3 (or 1,500 m).
+- **⛔ Circuit Breaker** set piece (first at ~1,700 m, then every ~2,500 m): a telegraphed gauntlet
+  (striped gate → gap, claws, bears, candles, gap, claws; later ones are longer) built from the normal fair
+  patterns at capped difficulty, with calm flats between stages, a progress bar, and a green gate that pays
+  1,500×N score, coins and ⚡+40. No catalysts spawn inside it.
+- **Perks (roguelite picks):** at 450/350 m, 1,200, 2,300, 3,600, 5,200, 7,000 m, then every 2,000 m, the run freezes
+  and you pick 1 of 3 (keys 1/2/3, click or tap). It only opens on safe ground, never mid-gauntlet or over a banner,
+  and gives 1.2 s of invulnerability plus a short slow-mo ease-in afterwards. 13 perks; 6 at the start, and more join the pool
+  as you get promoted (rank 1–5).
+- **First minute:** gentler terrain for the first 2 runs (hazards arrive later, early gaps narrower; the first gap of
+  every run is a gimme), a **training shield** for runs 1–2, coins on the intro ramps, and contextual hints
+  (landing marker; "HOLD ↓ to dive onto the red slope" while airborne over a downslope; "JUMP!" before hazards) until you have
+  a few Perfects. You can turn hints off in Settings. Easy starter missions and new early achievements
+  (first Perfect, first stomp, first perk, first Close Call, first regime change).
+- **Juice/clarity:** hit-stop on stomps/hits, Close Call bonus (skim a hazard, or a clutch landing just past a gap edge),
+  speed lines, 5× coins, and a killer highlight on death ("✖ BEAR CLAW" ring). The summary shows a snapshot of the crash,
+  the cause, and a specific tip.
+- **Ghost:** an optional pace ghost of your best run (x-position samples at 5 Hz, drawn riding the current chart;
+  on the Daily it retraces your exact line) plus a "BEST n m" flag. Stored separately in `blitzRush.ghost.v1`.
+- **Pacing:** retuned prices (cheapest upgrades 80–90, characters 400 → 10,000), mission rewards 50+25×rank,
+  a free mission swap after each run, and "Next unlock / Big goal / Coming up (free)" cards with progress bars
+  on the menu and the summary. Economy sim (`/tmp/pwtest/econ.js`, skill-ramping bot, 25 runs): something to buy almost every
+  run, a new character roughly every 4–8 runs, and free content unlocks in runs 1–3 and at each promotion.
+- **Save:** still `blitzRush.save.v1` (now `v: 2`). Old saves migrate in place: coins, upgrades, skins, records and
+  missions are kept, unknown missions are dropped, new fields get defaults, and veterans (3+ runs) skip the beginner flow.
+
 ## Meta-progression (the "one more run" loop)
 - **Coins** are banked after each run and spent in the **Shop**:
   - 9 upgrades, 5–8 levels each: rocket/magnet/2× duration, Dividends (+coins), Blitz Charge, Catalyst Luck,
@@ -53,8 +85,8 @@ shots/            screenshots from the headless test runs
 - **20 achievements** with coin rewards and in-run toasts.
 - **Records:** local top-10 leaderboard plus career stats. The run summary shows a count-up score, new-best banner,
   mission ticks, rewards, and a "next unlock: N coins to go" nudge.
-- Save data lives in `localStorage` key `blitzRush.save.v1`. "Reset all progress" in Settings clears only that key
-  (the league tracker's key is left alone).
+- Save data lives in `localStorage` key `blitzRush.save.v1` (ghost in `blitzRush.ghost.v1`). "Reset all progress" in Settings clears only
+  those keys (the league tracker's key is left alone).
 
 ## Playtime tracker
 The shared tracker is at `/workspace/league/shared/playtime.js`, documented in `/workspace/league/RULES.md`
@@ -82,6 +114,7 @@ with no console errors. It counts real key presses during play, and the badge do
 storage. There's no attract/demo mode (the menu background is just a scrolling chart), and no idle or auto-play
 of any kind. The game auto-pauses on blur or tab switch. For optional extra instrumentation, it exposes
 `window.BlitzRush.state` / `window.BlitzRush.isPlaying()` and fires a `blitzrush:state` CustomEvent.
+v2 adds a `'perk'` state while the perk picker is open (the run is frozen; `isPlaying()` is false).
 
 ## Testing
 ```
