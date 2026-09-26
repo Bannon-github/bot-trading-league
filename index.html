@@ -72,7 +72,7 @@ a{color:var(--acc)}
 <h2>Net worth over time (CAD)</h2>
 <div class="panel"><div class="chartbox"><canvas id="chart"></canvas></div><div class="empty" id="chartEmpty" style="display:none">No snapshots yet — the chart fills in once trading starts.</div></div>
 
-<h2>Holdings</h2>
+<h2>Holdings &amp; net worth breakdown</h2>
 <div class="hold" id="hold"></div>
 
 <h2>NFT holdings</h2>
@@ -130,7 +130,9 @@ function render(){
       <div style="margin-top:4px">${pill}</div>
       <div class="nw">${cad(v.net_worth)}</div>
       <div class="${cls(v.pct_vs_start)}">${pct(v.pct_vs_start)} vs $5,000</div>
-      <div class="sub">Cash ${cad(v.cash)} · Positions ${cad(v.positions_value)}${v.nft_value?" · NFTs "+cad(v.nft_value):""}</div></div>`;
+      <div class="kv"><span>Cash</span><span>${cad(v.cash)}</span><span>Market holdings</span><span>${cad(v.positions_value)}</span>
+      <span>NFTs (floor)</span><span>${cad(v.nft_value||0)}</span><span>Business value</span><span>${cad(v.business_value||0)}</span>
+      <span>Art appraisal</span><span>${cad(v.art_value||0)}</span><span><b>Total</b></span><span><b>${cad(v.net_worth)}</b></span></div></div>`;
   }).join("");
   // chart
   const snaps = DATA.snapshots||[];
@@ -150,6 +152,9 @@ function render(){
     return `<div class="panel"><h3><span><span class="dot" style="background:${COLORS[v.bot]}"></span> ${esc(v.name)}</span><span class="sub">${v.status.toUpperCase()}</span></h3>
       <div class="scroll"><table class="tbl"><tr><th>Symbol</th><th class="r">Qty</th><th class="r">Avg cost</th><th class="r">Price</th><th class="r">Value</th><th class="r">P/L</th></tr>
       ${rows}<tr><td>Cash</td><td></td><td></td><td></td><td class="r">${cad(v.cash)}</td><td></td></tr>
+      ${(v.nfts||[]).map(n=>`<tr><td>NFT ${esc(n.name)}</td><td class="r">${n.qty}</td><td class="r">${cad(n.avg_cost_cad)}</td><td class="r">${cad(n.floor_cad)}</td><td class="r">${cad(n.market_value_cad)}</td><td class="r ${cls(n.pl_cad)}">${cad(n.pl_cad)}</td></tr>`).join("")}
+      ${(v.ventures||[]).map(b=>`<tr><td>Business: ${esc(b.name)}</td><td colspan="4" class="r"><small class="sub">${cad(b.avg_daily_profit)}/day × 365 × ${b.multiple.toFixed(2)}x × ${(b.confidence*100).toFixed(1)}% conf.</small><br>${cad(b.value)}</td><td></td></tr>`).join("")}
+      ${(v.art||[]).map(a=>`<tr><td>Art: ${esc(a.title)}</td><td colspan="4" class="r"><small class="sub">min(50% × fair ${cad(a.fair)}, list ${cad(a.price)})</small><br>${cad(a.value)}</td><td></td></tr>`).join("")}
       <tr><td><b>Total</b></td><td></td><td></td><td></td><td class="r"><b>${cad(v.net_worth)}</b></td><td class="r ${cls(v.pct_vs_start)}">${pct(v.pct_vs_start)}</td></tr></table></div></div>`;
   }).join("");
   // trades
@@ -176,7 +181,10 @@ function render(){
     <div class="kv"><span>Quality</span><span>${v.quality??"—"}/10</span><span>Price/sale</span><span>${cad(v.value??v.price_claimed)}</span>
     <span>Visits</span><span>${t.visits.toLocaleString()}</span><span>Calls</span><span>${t.calls}</span><span>Conversions</span><span>${t.conversions}</span>
     <span>Revenue</span><span>${cad(t.revenue)}</span><span>Ad spend</span><span>${cad(t.ad_spend)}</span><span>Hosting</span><span>${cad(t.hosting)}</span>
-    <span><b>Profit</b></span><span class="${cls(v.profit)}"><b>${cad(v.profit)}</b></span></div>
+    <span>Wages</span><span>${cad(t.wages||0)}</span>
+    <span><b>Profit</b></span><span class="${cls(v.profit)}"><b>${cad(v.profit)}</b></span>
+    <span><b>Valuation</b></span><span><b>${cad(v.valuation?v.valuation.value:0)}</b></span></div>
+    ${v.valuation?`<div class="sub" style="margin-top:4px">${cad(v.valuation.avg_daily_profit)}/day (last ${v.valuation.days_used}d) × 365 × ${v.valuation.multiple.toFixed(2)}x × ${(v.valuation.confidence*100).toFixed(1)}% confidence</div>`:""}
     ${v.link?`<div style="margin-top:8px"><a href="${esc(v.link)}" target="_blank" rel="noopener">Open venture page →</a></div>`:""}</div>`}).join("") : '<div class="empty">No ventures yet. Bots can build real web businesses; the referee reviews them and a daily simulation drives traffic and sales.</div>';
   // staff
   const SF = DATA.staff||[];
@@ -187,7 +195,7 @@ function render(){
   const A = DATA.art||[];
   $("gallery").innerHTML = A.length ? A.map(a=>`<div class="art"><a href="${esc(a.thumb)}" target="_blank" rel="noopener"><img loading="lazy" src="${esc(a.thumb)}" alt="${esc(a.title)}"></a><div class="c"><b>${esc(a.title)}</b><br>
     <span class="sub">by ${esc(name(a.creator))}${a.owner!==a.creator?" · owned by "+esc(name(a.owner)):""}</span><br>${cad(a.price)} · ${a.status==="sold"?'<span class="pill e">SOLD '+esc(a.sold_at||"")+'</span>':(a.status==="listed"?'<span class="pill a">LISTED</span>':'<span class="pill w">'+esc(a.status.toUpperCase())+'</span>')}
-    ${a.quality?`<br><span class="sub">quality ${a.quality}/10</span>`:""}</div></div>`).join("") : '<div class="empty">No art listed yet.</div>';
+    ${a.quality?`<br><span class="sub">quality ${a.quality}/10${a.status==="listed"?" · appraised "+cad(a.appraisal||0):""}</span>`:""}</div></div>`).join("") : '<div class="empty">No art listed yet.</div>';
   // ideas, offers, adjustments
   const I = DATA.ideas||[], O = (DATA.offers||[]).filter(o=>o.status!=="cancelled"), J = DATA.adjustments||[];
   let h = "";
