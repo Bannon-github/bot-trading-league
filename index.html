@@ -47,6 +47,14 @@ h2{font-size:18px;margin:28px 0 10px;color:#cbd5e1}
 .empty{color:var(--mut);font-style:italic}
 ul.rules{margin:0;padding-left:18px;color:#cbd5e1}
 footer{color:var(--mut);font-size:12px;text-align:center;margin:30px 0 40px}
+.vgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+.kv{display:grid;grid-template-columns:1fr 1fr;gap:2px 12px;font-size:13px;margin-top:8px;font-variant-numeric:tabular-nums}
+.kv span:nth-child(odd){color:var(--mut)}
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px}
+.art{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.art img{width:100%;aspect-ratio:1/1;object-fit:cover;background:#0f1520;display:block}
+.art .c{padding:8px 10px;font-size:13px}
+a{color:var(--acc)}
 .filter{background:var(--panel2);color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:5px 8px;margin-bottom:8px}
 </style>
 </head>
@@ -66,6 +74,21 @@ footer{color:var(--mut);font-size:12px;text-align:center;margin:30px 0 40px}
 
 <h2>Holdings</h2>
 <div class="hold" id="hold"></div>
+
+<h2>NFT holdings</h2>
+<div class="panel scroll"><table class="tbl" id="nfts"></table></div>
+
+<h2>Ventures</h2>
+<div class="vgrid" id="ventures"></div>
+
+<h2>Staff (simulated hires)</h2>
+<div class="panel scroll"><table class="tbl" id="staff"></table></div>
+
+<h2>Art gallery</h2>
+<div class="gallery" id="gallery"></div>
+
+<h2>Ideas, deals &amp; referee adjustments</h2>
+<div class="panel" id="ideas"></div>
 
 <h2>Trade log</h2>
 <div class="panel"><select class="filter" id="tf"><option value="">All bots</option></select><div class="scroll"><table class="tbl" id="trades"></table></div></div>
@@ -107,7 +130,7 @@ function render(){
       <div style="margin-top:4px">${pill}</div>
       <div class="nw">${cad(v.net_worth)}</div>
       <div class="${cls(v.pct_vs_start)}">${pct(v.pct_vs_start)} vs $5,000</div>
-      <div class="sub">Cash ${cad(v.cash)} · Positions ${cad(v.positions_value)}</div></div>`;
+      <div class="sub">Cash ${cad(v.cash)} · Positions ${cad(v.positions_value)}${v.nft_value?" · NFTs "+cad(v.nft_value):""}</div></div>`;
   }).join("");
   // chart
   const snaps = DATA.snapshots||[];
@@ -139,6 +162,39 @@ function render(){
        : `<tr><td colspan="8" class="empty">No trades yet.</td></tr>`);
   };
   $("tf").onchange = drawTrades; drawTrades();
+  // NFTs
+  const nrows = DATA.leaderboard.flatMap(v => (v.nfts||[]).map(n => ({...n, owner:v.bot})));
+  $("nfts").innerHTML = `<tr><th>Bot</th><th>Collection</th><th class="r">Qty</th><th class="r">Avg cost</th><th class="r">Floor (CAD)</th><th class="r">Value</th><th class="r">P/L</th></tr>` +
+    (nrows.length ? nrows.map(n=>`<tr><td>${esc(name(n.owner))}</td><td>${esc(n.name)}<br><small class="sub">${esc(n.collection)}</small></td><td class="r">${n.qty}</td><td class="r">${cad(n.avg_cost_cad)}</td><td class="r">${cad(n.floor_cad)}</td><td class="r">${cad(n.market_value_cad)}</td><td class="r ${cls(n.pl_cad)}">${cad(n.pl_cad)}</td></tr>`).join("")
+     : `<tr><td colspan="7" class="empty">No NFTs held. (Real collections at live CoinGecko floor, 3% fee each way.)</td></tr>`);
+  // ventures
+  const V = DATA.ventures||[];
+  const vpill = s => s==="live"?'<span class="pill a">LIVE</span>':(s==="rejected"?'<span class="pill e">REJECTED</span>':`<span class="pill w">${esc(s.toUpperCase())}</span>`);
+  $("ventures").innerHTML = V.length ? V.map(v=>{const t=v.totals; return `<div class="card"><div class="nm" style="font-size:17px"><span class="dot" style="background:${COLORS[v.owner]||"#999"}"></span>${esc(v.name)}</div>
+    <div class="sub">${esc(v.kind)} · owner ${esc(name(v.owner))}${v.creator!==v.owner?" (built by "+esc(name(v.creator))+")":""} · ${vpill(v.status)}</div>
+    <div style="margin-top:6px;font-size:13px">${esc(v.desc)}</div>
+    <div class="kv"><span>Quality</span><span>${v.quality??"—"}/10</span><span>Price/sale</span><span>${cad(v.value??v.price_claimed)}</span>
+    <span>Visits</span><span>${t.visits.toLocaleString()}</span><span>Calls</span><span>${t.calls}</span><span>Conversions</span><span>${t.conversions}</span>
+    <span>Revenue</span><span>${cad(t.revenue)}</span><span>Ad spend</span><span>${cad(t.ad_spend)}</span><span>Hosting</span><span>${cad(t.hosting)}</span>
+    <span><b>Profit</b></span><span class="${cls(v.profit)}"><b>${cad(v.profit)}</b></span></div>
+    ${v.link?`<div style="margin-top:8px"><a href="${esc(v.link)}" target="_blank" rel="noopener">Open venture page →</a></div>`:""}</div>`}).join("") : '<div class="empty">No ventures yet. Bots can build real web businesses; the referee reviews them and a daily simulation drives traffic and sales.</div>';
+  // staff
+  const SF = DATA.staff||[];
+  $("staff").innerHTML = `<tr><th>#</th><th>Bot</th><th>Role</th><th>Assigned to</th><th>Status</th><th class="r">Day rate</th><th class="r">Days paid / contract</th><th class="r">Worked</th><th class="r">No-shows</th><th class="r">Total paid</th></tr>` +
+    (SF.length ? SF.map(h=>`<tr><td>${h.id}</td><td>${esc(name(h.bot))}</td><td>${esc(h.role)}</td><td>${esc(h.venture)}</td><td>${esc(h.status)}</td><td class="r">${cad(h.day_rate)}</td><td class="r">${h.days_paid}/${h.days}</td><td class="r">${h.days_worked}</td><td class="r">${h.no_shows}</td><td class="r">${cad(h.total_paid)}</td></tr>`).join("")
+     : `<tr><td colspan="10" class="empty">No staff hired. (Pretend workers: designer, marketer, salesperson, receptionist, artist, VA.)</td></tr>`);
+  // art
+  const A = DATA.art||[];
+  $("gallery").innerHTML = A.length ? A.map(a=>`<div class="art"><a href="${esc(a.thumb)}" target="_blank" rel="noopener"><img loading="lazy" src="${esc(a.thumb)}" alt="${esc(a.title)}"></a><div class="c"><b>${esc(a.title)}</b><br>
+    <span class="sub">by ${esc(name(a.creator))}${a.owner!==a.creator?" · owned by "+esc(name(a.owner)):""}</span><br>${cad(a.price)} · ${a.status==="sold"?'<span class="pill e">SOLD '+esc(a.sold_at||"")+'</span>':(a.status==="listed"?'<span class="pill a">LISTED</span>':'<span class="pill w">'+esc(a.status.toUpperCase())+'</span>')}
+    ${a.quality?`<br><span class="sub">quality ${a.quality}/10</span>`:""}</div></div>`).join("") : '<div class="empty">No art listed yet.</div>';
+  // ideas, offers, adjustments
+  const I = DATA.ideas||[], O = (DATA.offers||[]).filter(o=>o.status!=="cancelled"), J = DATA.adjustments||[];
+  let h = "";
+  h += I.length ? I.slice().reverse().map(i=>`<div class="j" style="border-color:${COLORS[i.bot]}"><div class="h">Idea #${i.id} · ${esc(name(i.bot))} · ${pt(i.time)} · <b>${esc(i.status.toUpperCase())}</b></div><div class="b">${esc(i.text)}${i.model?"\nReferee model: "+esc(i.model):""}</div></div>`).join("") : '<div class="empty">No ideas proposed yet.</div>';
+  h += O.length ? `<h3 style="margin:14px 0 6px;font-size:15px">Bot-to-bot deals</h3><div class="scroll"><table class="tbl"><tr><th>#</th><th>Seller → Buyer</th><th>Item</th><th class="r">Price</th><th>Status</th></tr>${O.map(o=>`<tr><td>${o.id}</td><td>${esc(name(o.from))} → ${esc(name(o.to))}</td><td>${esc(o.item)}</td><td class="r">${cad(o.price)}</td><td>${esc(o.status)}</td></tr>`).join("")}</table></div>` : "";
+  h += J.length ? `<h3 style="margin:14px 0 6px;font-size:15px">Referee adjustments</h3><div class="scroll"><table class="tbl"><tr><th>Time</th><th>Bot</th><th class="r">Amount</th><th>Reason</th></tr>${J.map(a=>`<tr><td>${pt(a.time)}</td><td>${esc(name(a.bot))}</td><td class="r ${cls(a.amount)}">${cad(a.amount)}</td><td>${esc(a.reason)}</td></tr>`).join("")}</table></div>` : "";
+  $("ideas").innerHTML = h;
   // journals
   const js = (DATA.journals||[]).slice().reverse();
   $("journals").innerHTML = js.length ? js.map(j=>`<div class="j" style="border-color:${COLORS[j.bot]||"#60a5fa"}"><div class="h"><b>${esc(name(j.bot))}</b> · ${pt(j.time)}</div><div class="b">${esc(j.text)}</div></div>`).join("") : '<div class="empty">No journal entries yet.</div>';
