@@ -1,0 +1,246 @@
+{
+ "_about": "Real-world ad benchmarks used by `league simulate` as each venture's baseline. Currency USD (converted to CAD at live USDCAD when simulating). Values are medians of US campaigns as published.",
+ "sources": [
+  {
+   "name": "WordStream by LocaliQ - Google Ads Benchmarks 2026 (search: average CPC and conversion rate by industry)",
+   "url": "https://www.wordstream.com/blog/2026-google-ads-benchmarks",
+   "report_pdf": "https://www.wordstream.com/wp-content/uploads/2026/05/ws-guide-2026-google-ads-benchmarks.pdf",
+   "year": 2026,
+   "data_period": "2025-04-01 to 2026-03-31",
+   "sample": "13,474 US search campaigns (Google Ads + Microsoft Ads), medians",
+   "overall": {
+    "cpc_usd": 5.42,
+    "cvr": 0.0818,
+    "ctr": 0.0664,
+    "cpl_usd": 66.69
+   }
+  },
+  {
+   "name": "WordStream by LocaliQ - Facebook Ads Benchmarks 2025 (traffic-campaign CPC by industry; leads-campaign CVR by industry)",
+   "url": "https://www.wordstream.com/blog/facebook-ads-benchmarks-2025",
+   "report_pdf": "https://www.wordstream.com/wp-content/uploads/2025/09/ws-guide-2025-fb-benchmarks.pdf",
+   "year": 2025,
+   "data_period": "2024-04-01 to 2025-06-30",
+   "sample": "1,180 campaigns, medians",
+   "overall": {
+    "traffic_cpc_usd": 0.7,
+    "leads_cvr": 0.0772,
+    "leads_cpc_usd": 1.92
+   }
+  }
+ ],
+ "not_sourced": {
+  "average_order_or_lead_value": "Not published per industry in these sources - the referee sets each venture's value per sale at review.",
+  "local_cpc_cad": 1.3,
+  "display_cpc_cad": 0.4,
+  "display_conversion_factor": 0.4,
+  "note": "Local-services and display channels use the engine's original constants (ESTIMATES, not sourced). Ventures with an unknown industry use the original flat constants for all channels (search 1.60, social 0.90 CAD) and the referee's --conv."
+ },
+ "retrieved": "2026-09-26",
+ "industries": {
+  "animals-pets": {
+   "label": "Animals & Pets",
+   "search_cpc_usd": 4.06,
+   "search_cvr": 0.1622,
+   "social_cpc_usd": 0.78,
+   "social_cvr": 0.1531,
+   "estimates": [
+    "social_cvr: ESTIMATE = 7.72% (all-industry Facebook leads median) x industry search CVR / 8.18% (all-industry search median)"
+   ]
+  },
+  "apparel-fashion-jewelry": {
+   "label": "Apparel / Fashion & Jewelry",
+   "search_cpc_usd": 4.44,
+   "search_cvr": 0.045,
+   "social_cpc_usd": 0.86,
+   "social_cvr": 0.0425,
+   "estimates": [
+    "social_cvr: ESTIMATE = 7.72% (all-industry Facebook leads median) x industry search CVR / 8.18% (all-industry search median)"
+   ]
+  },
+  "arts-entertainment": {
+   "label": "Arts & Entertainment",
+   "search_cpc_usd": 1.63,
+   "search_cvr": 0.0591,
+   "social_cpc_usd": 0.49,
+   "social_cvr": 0.0934,
+   "estimates": []
+  },
+  "attorneys-legal": {
+   "label": "Attorneys & Legal Services",
+   "search_cpc_usd": 9.87,
+   "search_cvr": 0.0555,
+   "social_cpc_usd": 0.86,
+   "social_cvr": 0.1053,
+   "estimates": []
+  },
+  "automotive-sale": {
+   "label": "Automotive — For Sale",
+   "search_cpc_usd": 2.27,
+   "search_cvr": 0.0601,
+   "social_cpc_usd": 0.79,
+   "social_cvr": 0.0567,
+   "estimates": [
+    "social_cvr: ESTIMATE = 7.72% (all-industry Facebook leads median) x industry search CVR / 8.18% (all-industry search median)"
+   ]
+  },
+  "automotive-repair": {
+   "label": "Automotive — Repair, Service & Parts",
+   "search_cpc_usd": 4.35,
+   "search_cvr": 0.1551,
+   "social_cpc_usd": 0.81,
+   "social_cvr": 0.1464,
+   "estimates": [
+    "social_cvr: ESTIMATE = 7.72% (all-industry Facebook leads median) x industry search CVR / 8.18% (all-industry search median)"
+   ]
+  },
+  "beauty-personal-care": {
+   "label": "Beauty & Personal Care",
+   "search_cpc_usd": 4.62,
+   "search_cvr": 0.1035,
+   "social_cpc_usd": 0.74,
+   "social_cvr": 0.0529,
+   "estimates": []
+  },
+  "business-services": {
+   "label": "Business Services",
+   "search_cpc_usd": 5.87,
+   "search_cvr": 0.0485,
+   "social_cpc_usd": 0.75,
+   "social_cvr": 0.0458,
+   "estimates": [
+    "social_cvr: ESTIMATE = 7.72% (all-industry Facebook leads median) x industry search CVR / 8.18% (all-industry search median)"
+   ]
+  },
+  "career-employment": {
+   "label": "Career & Employment",
+   "search_cpc_usd": 5.81,
+   "search_cvr": 0.0305,
+   "social_cpc_usd": 0.7,
+   "social_cvr": 0.0577,
+   "estimates": [
+    "social_cpc_usd: ESTIMATE (all-industry Facebook traffic median $0.70; industry not reported)"
+   ]
+  },
+  "dentists-dental": {
+   "label": "Dentists & Dental Services",
+   "search_cpc_usd": 8.0,
+   "search_cvr": 0.1067,
+   "social_cpc_usd": 0.7,
+   "social_cvr": 0.0638,
+   "estimates": [
+    "social_cpc_usd: ESTIMATE (all-industry Facebook traffic median $0.70; industry not reported)"
+   ]
+  },
+  "education-instruction": {
+   "label": "Education & Instruction",
+   "search_cpc_usd": 4.81,
+   "search_cvr": 0.1314,
+   "social_cpc_usd": 0.86,
+   "social_cvr": 0.1008,
+   "estimates": []
+  },
+  "finance-insurance": {
+   "label": "Finance & Insurance",
+   "search_cpc_usd": 3.39,
+   "search_cvr": 0.0264,
+   "social_cpc_usd": 1.22,
+   "social_cvr": 0.0249,
+   "estimates": [
+    "social_cvr: ESTIMATE = 7.72% (all-industry Facebook leads median) x industry search CVR / 8.18% (all-industry search median)"
+   ]
+  },
+  "furniture": {
+   "label": "Furniture",
+   "search_cpc_usd": 3.97,
+   "search_cvr": 0.0299,
+   "social_cpc_usd": 0.85,
+   "social_cvr": 0.0377,
+   "estimates": []
+  },
+  "health-fitness": {
+   "label": "Health & Fitness",
+   "search_cpc_usd": 6.17,
+   "search_cvr": 0.0694,
+   "social_cpc_usd": 0.8,
+   "social_cvr": 0.0563,
+   "estimates": []
+  },
+  "home-improvement": {
+   "label": "Home & Home Improvement",
+   "search_cpc_usd": 8.33,
+   "search_cvr": 0.0805,
+   "social_cpc_usd": 0.99,
+   "social_cvr": 0.0522,
+   "estimates": []
+  },
+  "industrial-commercial": {
+   "label": "Industrial & Commercial",
+   "search_cpc_usd": 5.87,
+   "search_cvr": 0.082,
+   "social_cpc_usd": 0.86,
+   "social_cvr": 0.0934,
+   "estimates": []
+  },
+  "personal-services": {
+   "label": "Personal Services",
+   "search_cpc_usd": 7.17,
+   "search_cvr": 0.1234,
+   "social_cpc_usd": 1.0,
+   "social_cvr": 0.0651,
+   "estimates": []
+  },
+  "physicians-surgeons": {
+   "label": "Physicians & Surgeons",
+   "search_cpc_usd": 4.76,
+   "search_cvr": 0.1243,
+   "social_cpc_usd": 0.82,
+   "social_cvr": 0.0451,
+   "estimates": []
+  },
+  "real-estate": {
+   "label": "Real Estate",
+   "search_cpc_usd": 3.22,
+   "search_cvr": 0.037,
+   "social_cpc_usd": 0.91,
+   "social_cvr": 0.0953,
+   "estimates": []
+  },
+  "restaurants-food": {
+   "label": "Restaurants & Food",
+   "search_cpc_usd": 2.05,
+   "search_cvr": 0.0805,
+   "social_cpc_usd": 0.72,
+   "social_cvr": 0.1825,
+   "estimates": []
+  },
+  "shopping-collectibles-gifts": {
+   "label": "Shopping, Collectibles & Gifts",
+   "search_cpc_usd": 4.14,
+   "search_cvr": 0.0401,
+   "social_cpc_usd": 0.34,
+   "social_cvr": 0.0378,
+   "estimates": [
+    "social_cvr: ESTIMATE = 7.72% (all-industry Facebook leads median) x industry search CVR / 8.18% (all-industry search median)"
+   ]
+  },
+  "sports-recreation": {
+   "label": "Sports & Recreation",
+   "search_cpc_usd": 2.77,
+   "search_cvr": 0.0769,
+   "social_cpc_usd": 0.41,
+   "social_cvr": 0.0548,
+   "estimates": []
+  },
+  "travel": {
+   "label": "Travel",
+   "search_cpc_usd": 2.14,
+   "search_cvr": 0.0583,
+   "social_cpc_usd": 0.51,
+   "social_cvr": 0.055,
+   "estimates": [
+    "social_cvr: ESTIMATE = 7.72% (all-industry Facebook leads median) x industry search CVR / 8.18% (all-industry search median)"
+   ]
+  }
+ }
+}
