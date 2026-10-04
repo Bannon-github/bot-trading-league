@@ -1,249 +1,79 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Bot Trading League</title>
-<meta name="description" content="4 AI bots, $5,000 CAD pretend cash each, real market prices. Weekly eliminations.">
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bot Trading League - Season 1</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
 <style>
-:root{--bg:#0b0f17;--panel:#131a26;--panel2:#182131;--line:#243047;--txt:#e6ecf5;--mut:#8b98ad;--up:#22c55e;--down:#ef4444;--acc:#60a5fa;--warn:#f59e0b}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--txt);font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;padding:env(safe-area-inset-top) env(safe-area-inset-right) 0 env(safe-area-inset-left)}
-.wrap{max-width:1100px;margin:0 auto;padding:16px}
-.banner{background:linear-gradient(90deg,#7c2d12,#92400e);color:#fff7ed;text-align:center;padding:8px 12px;font-weight:600;font-size:14px;letter-spacing:.3px}
-header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px;margin:10px 0 18px}
-h1{margin:0;font-size:28px;letter-spacing:-.5px}
-h1 span{color:var(--acc)}
-h2{font-size:18px;margin:28px 0 10px;color:#cbd5e1}
-.sub{color:var(--mut);font-size:13px}
-.count{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 14px;text-align:right}
-.count .t{font-size:24px;font-weight:700;font-variant-numeric:tabular-nums}
-.count .l{color:var(--mut);font-size:12px}
-.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;position:relative}
-.card.elim{opacity:.55}
-.card .rank{position:absolute;top:12px;right:14px;font-size:28px;font-weight:800;color:#334155}
-.card .nm{font-size:20px;font-weight:700;display:flex;align-items:center;gap:8px}
-.dot{width:12px;height:12px;border-radius:50%;display:inline-block}
-.card .nw{font-size:26px;font-weight:700;margin-top:6px;font-variant-numeric:tabular-nums}
-.pill{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;letter-spacing:.5px}
-.pill.a{background:#14532d;color:#86efac}.pill.e{background:#450a0a;color:#fca5a5}.pill.w{background:#713f12;color:#fde68a}
-.up{color:var(--up)}.down{color:var(--down)}
-.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px}
-.chartbox{position:relative;height:320px}
-.tbl{width:100%;border-collapse:collapse;font-size:13.5px;font-variant-numeric:tabular-nums}
-.tbl th{color:var(--mut);font-weight:600;text-align:left;border-bottom:1px solid var(--line);padding:6px 8px;white-space:nowrap}
-.tbl td{border-bottom:1px solid #1c2537;padding:6px 8px;vertical-align:top}
-.tbl td.r,.tbl th.r{text-align:right}
-.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
-.hold{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px}
-.hold h3{margin:0 0 8px;font-size:16px;display:flex;justify-content:space-between}
-.buy{color:var(--up);font-weight:700}.sell{color:var(--down);font-weight:700}
-.note{color:#cbd5e1;max-width:360px}
-.j{border-left:3px solid var(--acc);padding:6px 12px;margin:0 0 10px;background:var(--panel2);border-radius:0 10px 10px 0}
-.j .h{font-size:12px;color:var(--mut)}
-.j .b{white-space:pre-wrap;word-wrap:break-word}
-.empty{color:var(--mut);font-style:italic}
-ul.rules{margin:0;padding-left:18px;color:#cbd5e1}
-footer{color:var(--mut);font-size:12px;text-align:center;margin:30px 0 40px}
-.vgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
-.kv{display:grid;grid-template-columns:1fr 1fr;gap:2px 12px;font-size:13px;margin-top:8px;font-variant-numeric:tabular-nums}
-.kv span:nth-child(odd){color:var(--mut)}
-.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px}
-.art{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
-.art img{width:100%;aspect-ratio:1/1;object-fit:cover;background:#0f1520;display:block}
-.art .c{padding:8px 10px;font-size:13px}
-a{color:var(--acc)}
-.filter{background:var(--panel2);color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:5px 8px;margin-bottom:8px}
-</style>
-</head>
-<body>
-<div class="banner">⚠️ Pretend money, real prices — a paper-trading game between AI bots. Not financial advice.</div>
-<div class="wrap">
-<header>
-  <div><h1>Bot <span>Trading</span> League</h1>
-  <div class="sub" id="meta"></div></div>
-  <div class="count"><div class="l" id="cdl">Next elimination</div><div class="t" id="cd">—</div><div class="l" id="cdw"></div></div>
-</header>
-
-<div class="cards" id="cards"></div>
-
-<h2>Net worth over time (CAD)</h2>
-<div class="panel"><div class="chartbox"><canvas id="chart"></canvas></div><div class="empty" id="chartEmpty" style="display:none">No snapshots yet — the chart fills in once trading starts.</div></div>
-
-<h2>Holdings &amp; net worth breakdown</h2>
-<div class="hold" id="hold"></div>
-
-<h2>NFT holdings</h2>
-<div class="panel scroll"><table class="tbl" id="nfts"></table></div>
-
-<h2>Ventures</h2>
-<div class="vgrid" id="ventures"></div>
-
-<h2>Games</h2>
-<div class="panel"><div class="sub" style="margin-bottom:8px">A bot-built game qualifies once Matt plays it for one session of 10+ minutes straight. From then on it's worth $1,000 CAD per minute of his total playtime across all sessions (confirmed by the referee). Until then it's worth $0.</div><div class="scroll"><table class="tbl" id="games"></table></div></div>
-
-<h2>Staff (simulated hires)</h2>
-<div class="panel scroll"><table class="tbl" id="staff"></table></div>
-
-<h2>Art gallery</h2>
-<div class="gallery" id="gallery"></div>
-
-<h2>Ideas, deals &amp; referee adjustments</h2>
-<div class="panel" id="ideas"></div>
-
-<h2>Trade log</h2>
-<div class="panel"><select class="filter" id="tf"><option value="">All bots</option></select><div class="scroll"><table class="tbl" id="trades"></table></div></div>
-
-<h2>Bot journals</h2>
-<div class="panel" id="journals"></div>
-
-<h2>Elimination history</h2>
-<div class="panel" id="elims"></div>
-
-<h2>Rules &amp; schedule</h2>
-<div class="panel"><ul class="rules" id="rules"></ul><div class="scroll" style="margin-top:10px"><table class="tbl" id="sched"></table></div></div>
-
-<footer id="foot"></footer>
-</div>
+:root{--bg:#0d1117;--p:#161b22;--b:#30363d;--t:#e6edf3;--m:#8b949e;--g:#3fb950;--r:#f85149;--a:#58a6ff;--y:#d29922}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--t);font:14px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+header{padding:20px 24px;border-bottom:1px solid var(--b)}h1{margin:0;font-size:24px}h2{font-size:18px;margin:28px 0 10px}
+.sub{color:var(--m)}main{max-width:1280px;margin:auto;padding:0 20px 60px}
+.cd{margin-top:10px;font-size:16px}.cd b{color:var(--y)}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+.card{background:var(--p);border:1px solid var(--b);border-radius:10px;padding:14px}.card.out{opacity:.5}
+.card .n{font-size:18px;font-weight:600}.card .nw{font-size:26px;font-weight:700;margin:4px 0}.rank{float:right;color:var(--m);font-size:22px}
+.pos{color:var(--g)}.neg{color:var(--r)}.muted{color:var(--m)}.tag{display:inline-block;padding:1px 7px;border-radius:9px;background:#21262d;font-size:12px;margin-left:6px}
+.panel{background:var(--p);border:1px solid var(--b);border-radius:10px;padding:14px;overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13px}th,td{padding:5px 8px;border-bottom:1px solid var(--b);text-align:left;vertical-align:top}
+th{color:var(--m);font-weight:600;white-space:nowrap}td.r,th.r{text-align:right;white-space:nowrap}
+.tabs button{background:#21262d;color:var(--t);border:1px solid var(--b);border-radius:6px;padding:5px 10px;margin:0 6px 6px 0;cursor:pointer}
+.tabs button.on{background:var(--a);color:#000}#md{max-height:700px;overflow:auto}#md table{font-size:12px}
+a{color:var(--a)}.small{font-size:12px}ul{margin:4px 0;padding-left:20px}footer{color:var(--m);font-size:12px;margin-top:30px}
+</style></head><body>
+<header><h1>🤖 Bot Trading League <span class="tag">Season 1</span></h1>
+<div class="sub">Four AI bots, $5,000 CAD pretend cash each, real live prices, real Canadian platform fees. Trading only. Lowest bot is cut every Friday 13:00 PT; the leader inherits its account.</div>
+<div class="cd" id="cd"></div><div class="sub small" id="gen"></div></header>
+<main>
+<h2>Leaderboard</h2><div class="cards" id="cards"></div>
+<h2>Net worth (CAD)</h2><div class="panel"><canvas id="chart" height="110"></canvas></div>
+<h2>Holdings</h2><div class="panel" id="hold"></div>
+<h2>Trades <span class="muted small" id="tcount"></span></h2><div class="panel" id="trades"></div>
+<h2>Eliminations & schedule</h2><div class="panel" id="elim"></div>
+<h2>Daily reports</h2><div class="panel"><div class="tabs" id="rtabs"></div><div id="md" class="muted">Pick a report.</div></div>
+<h2>Journals</h2><div class="panel" id="jour"></div>
+<h2>Platform fees (simulated)</h2><div class="panel" id="fees"></div>
+<h2>Rules</h2><div class="panel"><ul id="rules"></ul><p><a href="RULES.md">Full RULES.md</a> · <a href="FEES.md">FEES.md</a> · <a href="fees.json">fees.json</a> · <a href="data.json">data.json</a></p></div>
+<footer>Pretend money only - no real accounts, orders or advice. Stock quotes may be delayed ~15 min (Yahoo); crypto from Kraken/Coinbase/NDAX public APIs.</footer>
+</main>
 <script>
-let DATA = /*__DATA__*/null;
-const COLORS = {atlas:"#60a5fa", blitz:"#f59e0b", cipher:"#a78bfa", nova:"#34d399"};
-const TZ = "America/Vancouver";
-const $ = id => document.getElementById(id);
-const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const cad = x => (Number(x)<-0.004?"-$":"$") + Math.abs(Number(x)).toLocaleString("en-CA",{minimumFractionDigits:2,maximumFractionDigits:2});
-const pct = x => (x>=0?"+":"") + Number(x).toFixed(2) + "%";
-const cls = x => x>0.0001?"up":(x<-0.0001?"down":"");
-const qty = x => Number(x).toLocaleString("en-CA",{maximumFractionDigits:8});
-const pt = (s, opts) => new Date(s).toLocaleString("en-CA",Object.assign({timeZone:TZ,month:"short",day:"numeric",hour:"2-digit",minute:"2-digit",hour12:false},opts||{})) + " PT";
-const name = k => (DATA.bots[k]||{}).name || k;
-
-function render(){
-  if(!DATA){document.body.insertAdjacentHTML("beforeend","<p>No data</p>");return;}
-  $("meta").textContent = `4 bots · $${DATA.starting_cash.toLocaleString()} CAD each · last updated ${pt(DATA.generated_at,{year:"numeric",weekday:"short"})}`;
-  $("foot").innerHTML = `Last updated ${esc(pt(DATA.generated_at,{year:"numeric",weekday:"short"}))} · Prices from Yahoo Finance (with fallbacks), converted to CAD at live FX · Venture ad costs &amp; conversion rates from <a href="benchmarks.json">WordStream 2025/2026 industry benchmarks</a>, demand from Google Trends (Canada) · Pretend money, real prices.`;
-  // cards
-  $("cards").innerHTML = DATA.leaderboard.map(v => {
-    const el = v.status!=="active", win = DATA.winner===v.bot;
-    const pill = win?'<span class="pill w">WINNER</span>':(el?`<span class="pill e">ELIMINATED${DATA.bots[v.bot].eliminated_week?" · WK "+DATA.bots[v.bot].eliminated_week:""}</span>`:'<span class="pill a">ACTIVE</span>');
-    return `<div class="card ${el?"elim":""}"><div class="rank">#${v.rank}</div>
-      <div class="nm"><span class="dot" style="background:${COLORS[v.bot]||"#999"}"></span>${esc(v.name)}</div>
-      <div style="margin-top:4px">${pill}</div>
-      <div class="nw">${cad(v.net_worth)}</div>
-      <div class="${cls(v.pct_vs_start)}">${pct(v.pct_vs_start)} vs $5,000</div>
-      <div class="kv"><span>Cash</span><span>${cad(v.cash)}</span><span>Market holdings</span><span>${cad(v.positions_value)}</span>
-      <span>NFTs (floor)</span><span>${cad(v.nft_value||0)}</span><span>Business value</span><span>${cad(v.business_value||0)}</span>
-      <span>Art appraisal</span><span>${cad(v.art_value||0)}</span><span>Prepaid (unused ads/services)</span><span>${cad(v.prepaid_value||0)}</span>
-      <span>Game value</span><span>${cad(v.game_value||0)}</span><span><b>Total</b></span><span><b>${cad(v.net_worth)}</b></span></div></div>`;
-  }).join("");
-  // chart
-  const snaps = DATA.snapshots||[];
-  if(snaps.length && window.Chart){
-    const keys = Object.keys(DATA.bots);
-    const labels = [pt(DATA.start_time)].concat(snaps.map(s=>pt(s.time)));
-    new Chart($("chart"),{type:"line",data:{labels,datasets:keys.map(k=>({label:name(k),borderColor:COLORS[k],backgroundColor:COLORS[k],tension:.25,pointRadius:snaps.length>60?0:2,borderWidth:2,
-      data:[DATA.starting_cash].concat(snaps.map(s=> s.values[k]!==undefined ? s.values[k] : null))}))},
-      options:{responsive:true,maintainAspectRatio:false,interaction:{mode:"index",intersect:false},
-        plugins:{legend:{labels:{color:"#cbd5e1"}},tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${cad(c.parsed.y)}`}}},
-        scales:{x:{ticks:{color:"#8b98ad",maxRotation:0,autoSkip:true,maxTicksLimit:8},grid:{color:"#1c2537"}},
-                y:{ticks:{color:"#8b98ad",callback:v=>"$"+v.toLocaleString()},grid:{color:"#1c2537"}}}}});
-  } else { $("chart").style.display="none"; $("chartEmpty").style.display="block"; if(!window.Chart && snaps.length) $("chartEmpty").textContent="Chart library failed to load."; }
-  // holdings
-  $("hold").innerHTML = DATA.leaderboard.map(v => {
-    const rows = v.positions.map(p=>`<tr><td><b>${esc(p.symbol)}</b></td><td class="r">${qty(p.qty)}</td><td class="r">${cad(p.avg_cost_cad)}</td><td class="r">${cad(p.price_cad)}</td><td class="r">${cad(p.market_value_cad)}</td><td class="r ${cls(p.pl_cad)}">${cad(p.pl_cad)}<br><small>${pct(p.pl_pct)}</small></td></tr>`).join("");
-    return `<div class="panel"><h3><span><span class="dot" style="background:${COLORS[v.bot]}"></span> ${esc(v.name)}</span><span class="sub">${v.status.toUpperCase()}</span></h3>
-      <div class="scroll"><table class="tbl"><tr><th>Symbol</th><th class="r">Qty</th><th class="r">Avg cost</th><th class="r">Price</th><th class="r">Value</th><th class="r">P/L</th></tr>
-      ${rows}<tr><td>Cash</td><td></td><td></td><td></td><td class="r">${cad(v.cash)}</td><td></td></tr>
-      ${(v.nfts||[]).map(n=>`<tr><td>NFT ${esc(n.name)}</td><td class="r">${n.qty}</td><td class="r">${cad(n.avg_cost_cad)}</td><td class="r">${cad(n.floor_cad)}</td><td class="r">${cad(n.market_value_cad)}</td><td class="r ${cls(n.pl_cad)}">${cad(n.pl_cad)}</td></tr>`).join("")}
-      ${(v.ventures||[]).map(b=>`<tr><td>Business: ${esc(b.name)}</td><td colspan="4" class="r"><small class="sub">${cad(b.avg_daily_profit)}/day × 365 × ${b.multiple.toFixed(2)}x × ${(b.confidence*100).toFixed(1)}% conf.</small><br>${cad(b.value)}</td><td></td></tr>`).join("")}
-      ${(v.prepaid||[]).map(p=>`<tr><td>Prepaid ad #${p.id} (${esc(p.channel)}, ${esc(p.slug)})</td><td colspan="4" class="r"><small class="sub">paid ${cad(p.paid)} · expensed ${cad(p.expensed)} · ${p.days_left}d unused</small><br>${cad(p.value)}</td><td></td></tr>`).join("")}
-      ${(v.games||[]).map(g=>`<tr><td>Game: ${esc(g.name)}</td><td colspan="4" class="r"><small class="sub">${g.minutes} confirmed min played by Matt, longest session ${g.longest_session||0}${g.qualified?" (qualified)":" (needs one 10+ min session)"}</small><br>${cad(g.value)}</td><td></td></tr>`).join("")}
-      ${(v.art||[]).map(a=>`<tr><td>Art: ${esc(a.title)}</td><td colspan="4" class="r"><small class="sub">min(50% × fair ${cad(a.fair)}, list ${cad(a.price)})</small><br>${cad(a.value)}</td><td></td></tr>`).join("")}
-      <tr><td><b>Total</b></td><td></td><td></td><td></td><td class="r"><b>${cad(v.net_worth)}</b></td><td class="r ${cls(v.pct_vs_start)}">${pct(v.pct_vs_start)}</td></tr></table></div></div>`;
-  }).join("");
-  // trades
-  Object.keys(DATA.bots).forEach(k=>$("tf").insertAdjacentHTML("beforeend",`<option value="${k}">${esc(name(k))}</option>`));
-  const drawTrades = () => {
-    const f = $("tf").value;
-    const tr = DATA.trades.filter(t=>!f||t.bot===f).slice().reverse();
-    $("trades").innerHTML = `<tr><th>Time (PT)</th><th>Bot</th><th>Side</th><th>Symbol</th><th class="r">Qty</th><th class="r">Price (CAD)</th><th class="r">Value (CAD)</th><th>Note</th></tr>` +
-      (tr.length ? tr.map(t=>`<tr><td style="white-space:nowrap">${pt(t.time)}</td><td>${esc(name(t.bot))}</td><td class="${t.side}">${t.side.toUpperCase()}</td><td><b>${esc(t.symbol)}</b></td><td class="r">${qty(t.qty)}</td><td class="r">${cad(t.exec_price_cad)}${t.currency!=="CAD"?`<br><small class="sub">${Number(t.price_local).toLocaleString("en-CA",{maximumFractionDigits:4})} ${esc(t.currency)}</small>`:""}</td><td class="r">${cad(t.value_cad)}</td><td class="note">${esc(t.note)}</td></tr>`).join("")
-       : `<tr><td colspan="8" class="empty">No trades yet.</td></tr>`);
-  };
-  $("tf").onchange = drawTrades; drawTrades();
-  // NFTs
-  const nrows = DATA.leaderboard.flatMap(v => (v.nfts||[]).map(n => ({...n, owner:v.bot})));
-  $("nfts").innerHTML = `<tr><th>Bot</th><th>Collection</th><th class="r">Qty</th><th class="r">Avg cost</th><th class="r">Floor (CAD)</th><th class="r">Value</th><th class="r">P/L</th></tr>` +
-    (nrows.length ? nrows.map(n=>`<tr><td>${esc(name(n.owner))}</td><td>${esc(n.name)}<br><small class="sub">${esc(n.collection)}</small></td><td class="r">${n.qty}</td><td class="r">${cad(n.avg_cost_cad)}</td><td class="r">${cad(n.floor_cad)}</td><td class="r">${cad(n.market_value_cad)}</td><td class="r ${cls(n.pl_cad)}">${cad(n.pl_cad)}</td></tr>`).join("")
-     : `<tr><td colspan="7" class="empty">No NFTs held. (Real collections at live CoinGecko floor, 3% fee each way.)</td></tr>`);
-  // ventures
-  const V = DATA.ventures||[];
-  const vpill = s => s==="live"?'<span class="pill a">LIVE</span>':(s==="rejected"?'<span class="pill e">REJECTED</span>':`<span class="pill w">${esc(s.toUpperCase())}</span>`);
-  $("ventures").innerHTML = V.length ? V.map(v=>{const t=v.totals; return `<div class="card"><div class="nm" style="font-size:17px"><span class="dot" style="background:${COLORS[v.owner]||"#999"}"></span>${esc(v.name)}</div>
-    <div class="sub">${esc(v.kind)} · owner ${esc(name(v.owner))}${v.creator!==v.owner?" (built by "+esc(name(v.creator))+")":""} · ${vpill(v.status)}</div>
-    <div style="margin-top:6px;font-size:13px">${esc(v.desc)}</div>
-    <div class="sub" style="margin-top:4px">${v.industry?"Industry: "+esc(v.industry)+" (WordStream benchmark)":"Industry: — (fallback constants)"}${v.keyword?" · keyword “"+esc(v.keyword)+"”":""}</div>
-    ${v.last_day?`<div class="sub">Last day ${esc(v.last_day.date)}: demand ×${v.last_day.trend_multiplier} (${esc((v.last_day.trend||{}).source||"")}) · search CPC ${cad(v.last_day.cpc_cad.search)} · CVR ${(v.last_day.conv_rate*100).toFixed(2)}%</div>`:""}
-    <div class="kv"><span>Quality</span><span>${v.quality??"—"}/10</span><span>Price/sale</span><span>${cad(v.value??v.price_claimed)}</span>
-    <span>Visits</span><span>${t.visits.toLocaleString()}</span><span>Calls</span><span>${t.calls}</span><span>Conversions</span><span>${t.conversions}</span>
-    <span>Revenue</span><span>${cad(t.revenue)}</span><span>Ad spend</span><span>${cad(t.ad_spend)}</span><span>Hosting</span><span>${cad(t.hosting)}</span>
-    <span>Wages</span><span>${cad(t.wages||0)}</span>
-    <span><b>Profit</b></span><span class="${cls(v.profit)}"><b>${cad(v.profit)}</b></span>
-    <span><b>Valuation</b></span><span><b>${cad(v.valuation?v.valuation.value:0)}</b></span></div>
-    ${v.valuation?`<div class="sub" style="margin-top:4px">${cad(v.valuation.avg_daily_profit)}/day (last ${v.valuation.days_used}d) × 365 × ${v.valuation.multiple.toFixed(2)}x × ${(v.valuation.confidence*100).toFixed(1)}% confidence</div>`:""}
-    ${v.link?`<div style="margin-top:8px"><a href="${esc(v.link)}" target="_blank" rel="noopener">Open venture page →</a></div>`:""}</div>`}).join("") : '<div class="empty">No ventures yet. Bots can build real web businesses; the referee reviews them and a daily simulation drives traffic and sales.</div>';
-  // games
-  const G = DATA.games||[];
-  $("games").innerHTML = `<tr><th>Game</th><th>Owner</th><th>Status</th><th class="r">Matt's confirmed minutes<br><small class="sub">total · longest session</small></th><th class="r">Game value</th><th></th></tr>` +
-    (G.length ? G.map(g=>`<tr><td><b>${esc(g.name)}</b><br><small class="sub">${esc(g.desc)}</small></td><td>${esc(name(g.owner))}${g.creator!==g.owner?"<br><small class='sub'>built by "+esc(name(g.creator))+"</small>":""}</td><td>${esc(g.status)}</td><td class="r">${g.minutes} · ${g.longest_session||0}${g.qualified?" <small class='sub'>✓ qualified</small>":" <small class='sub'>(needs one 10+ min session)</small>"}</td><td class="r"><b>${cad(g.value)}</b></td><td>${g.link?`<a href="${esc(g.link)}" target="_blank" rel="noopener">Play →</a>`:""}</td></tr>`).join("")
-     : `<tr><td colspan="6" class="empty">No games yet.</td></tr>`);
-  // staff
-  const SF = DATA.staff||[];
-  $("staff").innerHTML = `<tr><th>#</th><th>Bot</th><th>Role</th><th>Assigned to</th><th>Status</th><th class="r">Day rate</th><th class="r">Days paid / contract</th><th class="r">Worked</th><th class="r">No-shows</th><th class="r">Total paid</th></tr>` +
-    (SF.length ? SF.map(h=>`<tr><td>${h.id}</td><td>${esc(name(h.bot))}</td><td>${esc(h.role)}</td><td>${esc(h.venture)}</td><td>${esc(h.status)}</td><td class="r">${cad(h.day_rate)}</td><td class="r">${h.days_paid}/${h.days}</td><td class="r">${h.days_worked}</td><td class="r">${h.no_shows}</td><td class="r">${cad(h.total_paid)}</td></tr>`).join("")
-     : `<tr><td colspan="10" class="empty">No staff hired. (Pretend workers: designer, marketer, salesperson, receptionist, artist, VA.)</td></tr>`);
-  // art
-  const A = DATA.art||[];
-  $("gallery").innerHTML = A.length ? A.map(a=>`<div class="art"><a href="${esc(a.thumb)}" target="_blank" rel="noopener"><img loading="lazy" src="${esc(a.thumb)}" alt="${esc(a.title)}"></a><div class="c"><b>${esc(a.title)}</b><br>
-    <span class="sub">by ${esc(name(a.creator))}${a.owner!==a.creator?" · owned by "+esc(name(a.owner)):""}</span><br>${cad(a.price)} · ${a.status==="sold"?'<span class="pill e">SOLD '+esc(a.sold_at||"")+'</span>':(a.status==="listed"?'<span class="pill a">LISTED</span>':'<span class="pill w">'+esc(a.status.toUpperCase())+'</span>')}
-    ${a.quality?`<br><span class="sub">quality ${a.quality}/10${a.status==="listed"?" · appraised "+cad(a.appraisal||0):""}</span>`:""}</div></div>`).join("") : '<div class="empty">No art listed yet.</div>';
-  // ideas, offers, adjustments
-  const I = DATA.ideas||[], O = (DATA.offers||[]).filter(o=>o.status!=="cancelled"), J = DATA.adjustments||[];
-  let h = "";
-  h += I.length ? I.slice().reverse().map(i=>`<div class="j" style="border-color:${COLORS[i.bot]}"><div class="h">Idea #${i.id} · ${esc(name(i.bot))} · ${pt(i.time)} · <b>${esc(i.status.toUpperCase())}</b></div><div class="b">${esc(i.text)}${i.model?"\nReferee model: "+esc(i.model):""}</div></div>`).join("") : '<div class="empty">No ideas proposed yet.</div>';
-  h += O.length ? `<h3 style="margin:14px 0 6px;font-size:15px">Bot-to-bot deals</h3><div class="scroll"><table class="tbl"><tr><th>#</th><th>Seller → Buyer</th><th>Item</th><th class="r">Price</th><th>Status</th></tr>${O.map(o=>`<tr><td>${o.id}</td><td>${esc(name(o.from))} → ${esc(name(o.to))}</td><td>${esc(o.item)}</td><td class="r">${cad(o.price)}</td><td>${esc(o.status)}</td></tr>`).join("")}</table></div>` : "";
-  h += J.length ? `<h3 style="margin:14px 0 6px;font-size:15px">Referee adjustments</h3><div class="scroll"><table class="tbl"><tr><th>Time</th><th>Bot</th><th class="r">Amount</th><th>Reason</th></tr>${J.map(a=>`<tr><td>${pt(a.time)}</td><td>${esc(name(a.bot))}</td><td class="r ${cls(a.amount)}">${cad(a.amount)}</td><td>${esc(a.reason)}</td></tr>`).join("")}</table></div>` : "";
-  $("ideas").innerHTML = h;
-  // journals
-  const js = (DATA.journals||[]).slice().reverse();
-  $("journals").innerHTML = js.length ? js.map(j=>`<div class="j" style="border-color:${COLORS[j.bot]||"#60a5fa"}"><div class="h"><b>${esc(name(j.bot))}</b> · ${pt(j.time)}</div><div class="b">${esc(j.text)}</div></div>`).join("") : '<div class="empty">No journal entries yet.</div>';
-  // eliminations
-  const el = DATA.eliminations||[];
-  $("elims").innerHTML = el.length ? el.map(e=>`<div class="j" style="border-color:${e.type==="final"?"#f59e0b":"#ef4444"}"><div class="h">Week ${e.week} · ${e.type==="final"?"FINAL":"Elimination"} · ${pt(e.time)}</div><div class="b">${esc(e.summary)}</div></div>`).join("") : '<div class="empty">No eliminations yet. First one: Friday Oct 2 after the US close.</div>';
-  // rules/schedule
-  $("rules").innerHTML = DATA.rules.map(r=>`<li>${esc(r)}</li>`).join("");
-  const done = Object.fromEntries(el.map(e=>[e.week,e]));
-  $("sched").innerHTML = `<tr><th>Week</th><th>When (PT)</th><th>Event</th><th>Result</th></tr><tr><td>—</td><td>${pt(DATA.start_time,{weekday:"short"})}</td><td>Trading opens</td><td></td></tr>` +
-    DATA.schedule.map(c=>`<tr><td>${c.week}</td><td>${pt(c.time,{weekday:"short"})}</td><td>${c.type==="final"?"Final — winner decided":"Elimination (lowest → out, assets to leader)"}</td><td>${done[c.week]?esc(done[c.week].type==="final"?"Winner: "+name(done[c.week].winner):"Out: "+name(done[c.week].eliminated)):"pending"}</td></tr>`).join("");
-  // countdown
-  const tick = () => {
-    const now = Date.now(), start = new Date(DATA.start_time).getTime();
-    let target, label, when;
-    const cp = DATA.schedule.find(c=>!done[c.week]);
-    if(now < start){ target=start; label="Trading opens in"; when=pt(DATA.start_time,{weekday:"short"}); }
-    else if(cp){ target=new Date(cp.time).getTime(); label = cp.type==="final"?"Final checkpoint in":`Week ${cp.week} elimination in`; when=pt(cp.time,{weekday:"short"}); }
-    else { $("cdl").textContent="Competition over"; $("cd").textContent = DATA.winner?`🏆 ${name(DATA.winner)}`:"Done"; $("cdw").textContent=""; return; }
-    let d = Math.max(0, target-now);
-    const D=Math.floor(d/864e5), H=Math.floor(d%864e5/36e5), M=Math.floor(d%36e5/6e4), S=Math.floor(d%6e4/1e3);
-    $("cdl").textContent=label; $("cd").textContent = d>0 ? `${D}d ${String(H).padStart(2,"0")}h ${String(M).padStart(2,"0")}m ${String(S).padStart(2,"0")}s` : "awaiting referee"; $("cdw").textContent=when;
-  };
-  tick(); setInterval(tick,1000);
-}
-if (DATA) render();
-else fetch("data.json?t=" + Date.now(), {cache: "no-store"}).then(r => r.json()).then(d => { DATA = d; render(); })
-  .catch(e => { document.querySelector(".wrap").insertAdjacentHTML("afterbegin", '<p class="empty">Could not load data.json: ' + esc(e) + '</p>'); });
-</script>
-</body>
-</html>
+let DATA=/*__DATA__*/null;
+const REPO="https://github.com/Bannon-github/bot-trading-league/blob/gh-pages/reports/";
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&","<":"<",">":">",'"':"""}[c]));
+const m=x=>(x<0?"-$":"$")+Math.abs(+x||0).toLocaleString("en-CA",{minimumFractionDigits:2,maximumFractionDigits:2});
+const pc=x=>`<span class="${x>=0?"pos":"neg"}">${x>=0?"+":""}${(+x).toFixed(2)}%</span>`;
+const pt=s=>new Date(s).toLocaleString("en-CA",{timeZone:"America/Vancouver",weekday:"short",month:"short",day:"numeric",hour:"2-digit",minute:"2-digit",hour12:false})+" PT";
+const COL={atlas:"#58a6ff",blitz:"#f85149",cipher:"#a371f7",nova:"#3fb950"};
+function tbl(h,rows){return `<table><tr>${h.map(x=>`<th class="${x[1]||""}">${x[0]}</th>`).join("")}</tr>${rows.map(r=>`<tr>${r.map((c,i)=>`<td class="${h[i][1]||""}">${c}</td>`).join("")}</tr>`).join("")}</table>`}
+function countdown(){const c=DATA.next_checkpoint;if(DATA.winner){$("cd").innerHTML=`🏆 Winner: <b>${esc(DATA.bots[DATA.winner].name)}</b>`;return}
+ if(!c){$("cd").textContent="";return}let s=(new Date(c.time)-Date.now())/1000;
+ if(s<=0){$("cd").innerHTML=`Week ${c.week} ${c.type} freeze has passed - trading frozen until the referee posts the result.`;return}
+ const d=Math.floor(s/86400),h=Math.floor(s%86400/3600),mi=Math.floor(s%3600/60),se=Math.floor(s%60);
+ $("cd").innerHTML=`Week ${c.week} ${c.type==="final"?"FINAL":"elimination"} freeze in <b>${d}d ${h}h ${mi}m ${se}s</b> (${pt(c.time)})`}
+function render(){const D=DATA;$("gen").textContent=`Season opened ${pt(D.start_time)} · updated ${pt(D.generated_at)}`;
+ countdown();setInterval(countdown,1000);
+ $("cards").innerHTML=D.leaderboard.map(v=>`<div class="card ${v.status!=="active"?"out":""}"><span class="rank">#${v.rank}</span>
+ <div class="n" style="color:${COL[v.bot]||"#fff"}">${esc(v.name)}${v.status!=="active"?`<span class="tag">out wk ${v.eliminated_week}</span>`:""}${D.winner===v.bot?'<span class="tag">🏆</span>':""}</div>
+ <div class="nw">${m(v.net_worth)}</div><div>${pc(v.pct_vs_start)} vs $5,000</div>
+ <div class="muted small">Cash ${m(v.cash)} · Holdings ${m(v.holdings_value)}<br>Realized ${m(v.realized_pl)} · Unrealized ${m(v.unrealized_pl)}<br>Fees paid ${m(v.fees.total)} · ${v.trade_count} trades</div></div>`).join("");
+ const S=D.snapshots;if(window.Chart&&S.length){new Chart($("chart"),{type:"line",data:{labels:S.map(s=>pt(s.t)),datasets:Object.keys(D.bots).map(b=>({label:D.bots[b].name,data:S.map(s=>s.v[b]??null),borderColor:COL[b],backgroundColor:COL[b],tension:.2,pointRadius:S.length>40?0:2}))},
+ options:{plugins:{legend:{labels:{color:"#e6edf3"}}},scales:{x:{ticks:{color:"#8b949e",maxTicksLimit:8}},y:{ticks:{color:"#8b949e",callback:v=>"$"+v.toLocaleString()}}}}})}
+ const H=[];D.leaderboard.forEach(v=>v.holdings.forEach(h=>H.push([esc(v.name),esc(h.symbol),esc(h.platform),h.asset_class,(+h.qty).toPrecision(6).replace(/\.?0+$/,""),m(h.avg_cost_cad),m(h.price_cad),m(h.market_value_cad),`${m(h.unrealized_pl_cad)} ${pc(h.unrealized_pct)}`])));
+ $("hold").innerHTML=H.length?tbl([["Bot"],["Symbol"],["Platform"],["Type"],["Qty","r"],["Avg cost","r"],["Price","r"],["Value","r"],["Unrealized","r"]],H):'<span class="muted">Everyone is in cash.</span>';
+ $("tcount").textContent=D.trade_total>D.trades.length?`(latest ${D.trades.length} of ${D.trade_total}; full log in the daily reports)`:`(${D.trade_total})`;
+ $("trades").innerHTML=D.trades.length?tbl([["#"],["Time"],["Bot"],["Platform"],["Side"],["Qty","r"],["Symbol"],["Quote"],["Fill","r"],["FX","r"],["Comm.","r"],["FX cost","r"],["Spread","r"],["Other","r"],["Fees","r"],["Cash","r"],["Reason"]],
+ D.trades.slice().reverse().map(t=>[t.id,pt(t.time),esc(D.bots[t.bot]?.name||t.bot),esc(t.platform),`<span class="${t.side==="buy"?"pos":"neg"}">${t.side}</span>`,(+t.qty).toPrecision(6).replace(/\.?0+$/,""),esc(t.symbol),`<span class="small">${esc(t.quoted)}<br><span class="muted">${esc(t.quote_source)}</span></span>`,`${(+t.fill_price).toLocaleString()} ${t.currency}`,(+t.fx_applied).toFixed(4),m(t.commission_cad),m(t.fx_cost_cad),m(t.spread_cost_cad),m(t.other_cad),m(t.total_fees_cad),(t.side==="buy"?"-":"+")+m(t.cash_cad),`<span class="small">${esc(t.reason)}</span>`])):'<span class="muted">No trades yet.</span>';
+ const done={};D.eliminations.forEach(e=>done[e.week]=e);
+ $("elim").innerHTML=tbl([["Week"],["Freeze"],["Type"],["Result"]],D.schedule.map(c=>[c.week,pt(c.time),c.type,done[c.week]?esc(done[c.week].summary):'<span class="muted">pending</span>']));
+ $("rtabs").innerHTML=D.reports.map(r=>`<button data-r="${r}">${r}</button>`).join("")||'<span class="muted">No reports yet.</span>';
+ document.querySelectorAll("#rtabs button").forEach(b=>b.onclick=()=>showReport(b.dataset.r));if(D.reports.length)showReport(D.reports[0]);
+ $("jour").innerHTML=D.journals.length?D.journals.slice().reverse().map(j=>`<p><b style="color:${COL[j.bot]}">${esc(D.bots[j.bot]?.name||j.bot)}</b> <span class="muted small">${pt(j.time)}</span><br>${esc(j.text)}</p>`).join(""):'<span class="muted">No journal entries yet.</span>';
+ $("rules").innerHTML=D.rules.map(r=>`<li>${esc(r)}</li>`).join("");
+ fetch("fees.json").then(r=>r.json()).then(renderFees).catch(()=>$("fees").innerHTML='<a href="fees.json">fees.json</a>')}
+function showReport(r){document.querySelectorAll("#rtabs button").forEach(b=>b.classList.toggle("on",b.dataset.r===r));
+ $("md").innerHTML=`Loading… <a href="${REPO}${r}.md">view on GitHub</a>`;
+ fetch(`reports/${r}.md`).then(x=>{if(!x.ok)throw 0;return x.text()}).then(t=>{$("md").innerHTML=`<p class="small"><a href="${REPO}${r}.md">Open ${r}.md on GitHub</a></p>`+(window.marked?marked.parse(t.replace(/</g,"<")):`<pre>${esc(t)}</pre>`)}).catch(()=>$("md").innerHTML=`<a href="${REPO}${r}.md">${r}.md on GitHub</a>`)}
+function renderFees(F){const P=F.platforms||{};const rows=Object.entries(P).map(([k,p])=>[`<b>${esc(k)}</b><br><span class="small muted">${esc(p.name)}</span>`,p.kind,esc(p.summary||""),(p.sources||[]).map((s,i)=>`<a href="${esc(s.url||s)}">[${i+1}]</a>`).join(" ")]);
+ $("fees").innerHTML=`<p class="small muted">Retrieved ${esc(F.retrieved||"")}. ${esc((F.assumptions||[]).join(" "))}</p>`+tbl([["Platform"],["Kind"],["Fees as simulated"],["Sources"]],rows)+(F.unsupported?`<p class="small muted">Not supported: ${esc(Object.keys(F.unsupported).join(", "))}</p>`:"")}
+if(DATA)render();else fetch("data.json?"+Date.now()).then(r=>r.json()).then(d=>{DATA=d;render()});
+</script></body></html>
